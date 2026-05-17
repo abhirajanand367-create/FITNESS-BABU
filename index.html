@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITHOMEY - AI Fitness Coach</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <i class="fas fa-dumbbell"></i>
+        <span>FITHOMEY</span>
+      </div>
+      <div class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></div>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#home" class="active">Home</a></li>
+        <li><a href="#assessment">Assessment</a></li>
+        <li><a href="#dashboard">Dashboard</a></li>
+        <li><a href="#plan">Fitness Plan</a></li>
+        <li><a href="#achievements">Achievements</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO / LANDING -->
+  <section class="hero" id="home">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge">AI-Powered Fitness Assistant</div>
+      <h1 class="hero-title">Transform Your Body<br><span class="gradient-text">With FITHOMEY</span></h1>
+      <p class="hero-subtitle">Your personal AI fitness coach that analyzes your health, creates custom plans, and guides you every step of the way.</p>
+      <div class="hero-cta">
+        <a href="#assessment" class="btn-primary"><i class="fas fa-rocket"></i> Start Your Journey</a>
+        <a href="#plan" class="btn-secondary"><i class="fas fa-play-circle"></i> See Features</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="stat-num">10K+</span><span class="stat-label">Active Users</span></div>
+        <div class="hero-stat"><span class="stat-num">95%</span><span class="stat-label">Satisfaction</span></div>
+        <div class="hero-stat"><span class="stat-num">AI</span><span class="stat-label">Powered</span></div>
+      </div>
+    </div>
+    <div class="hero-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+  </section>
+
+  <!-- USER INPUT / ASSESSMENT -->
+  <section class="section" id="assessment">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Assessment</span>
+        <h2>Tell Us About Yourself</h2>
+        <p>Enter your details and let our AI analyze your fitness profile.</p>
+      </div>
+      <div class="form-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-calendar"></i> Age</label>
+            <input type="number" id="age" min="1" max="120" placeholder="e.g. 25" value="25">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-venus-mars"></i> Gender</label>
+            <select id="gender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-arrows-alt-v"></i> Height</label>
+            <div class="input-group">
+              <input type="number" id="height" step="0.1" placeholder="e.g. 175" value="175">
+              <select id="heightUnit">
+                <option value="cm">cm</option>
+                <option value="ft">feet</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-weight"></i> Weight (kg)</label>
+            <input type="number" id="weight" step="0.1" placeholder="e.g. 70" value="70">
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-running"></i> Activity Level</label>
+          <div class="activity-selector">
+            <div class="activity-option" data-value="low">
+              <i class="fas fa-chair"></i>
+              <span>Low</span>
+              <small>Sedentary</small>
+            </div>
+            <div class="activity-option active" data-value="medium">
+              <i class="fas fa-walking"></i>
+              <span>Medium</span>
+              <small>Moderate</small>
+            </div>
+            <div class="activity-option" data-value="high">
+              <i class="fas fa-running"></i>
+              <span>High</span>
+              <small>Very Active</small>
+            </div>
+          </div>
+          <input type="hidden" id="activity" value="medium">
+        </div>
+        <button class="btn-primary btn-full" id="analyzeBtn"><i class="fas fa-calculator"></i> Analyze My Health</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS DASHBOARD -->
+  <section class="section" id="dashboard" style="display:none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Your Results</span>
+        <h2>Fitness Analytics Dashboard</h2>
+        <p>Here's your personalized health analysis.</p>
+      </div>
+      <div class="dashboard-grid">
+        <div class="dash-card bmi-card">
+          <div class="card-icon"><i class="fas fa-weight"></i></div>
+          <div class="card-value" id="bmiValue">0</div>
+          <div class="card-label">BMI</div>
+          <div class="card-sub" id="bmiCategory">Normal</div>
+          <div class="progress-bar"><div class="progress-fill bmi-fill" id="bmiProgress"></div></div>
+        </div>
+        <div class="dash-card calorie-card">
+          <div class="card-icon"><i class="fas fa-fire"></i></div>
+          <div class="card-value" id="calorieValue">0</div>
+          <div class="card-label">Daily Calories</div>
+          <div class="card-sub">TDEE Estimate</div>
+        </div>
+        <div class="dash-card water-card">
+          <div class="card-icon"><i class="fas fa-tint"></i></div>
+          <div class="card-value"><span id="waterValue">0</span> L</div>
+          <div class="card-label">Water Intake</div>
+          <div class="card-sub">Hydration Goal</div>
+          <div class="progress-bar"><div class="progress-fill water-fill" id="waterProgress"></div></div>
+        </div>
+        <div class="dash-card fitness-card">
+          <div class="card-icon"><i class="fas fa-heartbeat"></i></div>
+          <div class="card-value"><span id="fitnessScore">0</span>/100</div>
+          <div class="card-label">Fitness Score</div>
+          <div class="card-sub" id="fitnessLevel">Good</div>
+          <div class="progress-bar"><div class="progress-fill fitness-fill" id="fitnessProgress"></div></div>
+        </div>
+      </div>
+
+      <!-- HEALTH RISK -->
+      <div class="risk-card" id="riskCard">
+        <div class="risk-header">
+          <i class="fas fa-shield-alt"></i>
+          <h3>Health Risk Assessment</h3>
+        </div>
+        <div class="risk-body">
+          <div class="risk-level" id="riskLevel">Low Risk</div>
+          <p id="riskMessage">You are in a healthy range. Keep up the good work!</p>
+          <div class="risk-bar"><div class="risk-fill" id="riskProgress"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FITNESS PLAN -->
+  <section class="section" id="plan" style="display:none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Your Plan</span>
+        <h2>Personalized Fitness Plan</h2>
+        <p>Your AI-generated daily health roadmap.</p>
+      </div>
+      <div class="plan-tabs">
+        <button class="plan-tab active" data-tab="workout"><i class="fas fa-dumbbell"></i> Workout</button>
+        <button class="plan-tab" data-tab="diet"><i class="fas fa-utensils"></i> Diet</button>
+        <button class="plan-tab" data-tab="sleep"><i class="fas fa-bed"></i> Sleep</button>
+        <button class="plan-tab" data-tab="habits"><i class="fas fa-check-circle"></i> Habits</button>
+      </div>
+      <div class="plan-content active" id="tab-workout">
+        <div class="plan-card">
+          <h3><i class="fas fa-home"></i> Home Workout</h3>
+          <ul id="homeWorkoutList"></ul>
+        </div>
+        <div class="plan-card">
+          <h3><i class="fas fa-building"></i> Gym Workout</h3>
+          <ul id="gymWorkoutList"></ul>
+        </div>
+      </div>
+      <div class="plan-content" id="tab-diet">
+        <div class="plan-card">
+          <h3><i class="fas fa-sun"></i> Meal Plan</h3>
+          <div class="meal-grid" id="mealPlan"></div>
+        </div>
+        <div class="plan-card">
+          <h3><i class="fas fa-check-circle"></i> Foods to Eat</h3>
+          <div class="food-tags" id="foodsEat"></div>
+        </div>
+        <div class="plan-card">
+          <h3><i class="fas fa-ban"></i> Foods to Avoid</h3>
+          <div class="food-tags avoid" id="foodsAvoid"></div>
+        </div>
+      </div>
+      <div class="plan-content" id="tab-sleep">
+        <div class="plan-card">
+          <h3><i class="fas fa-moon"></i> Recommended Sleep Schedule</h3>
+          <div class="sleep-schedule" id="sleepSchedule"></div>
+        </div>
+      </div>
+      <div class="plan-content" id="tab-habits">
+        <div class="plan-card">
+          <h3><i class="fas fa-star"></i> Daily Healthy Habits</h3>
+          <ul id="habitsList"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACHIEVEMENTS & GAMIFICATION -->
+  <section class="section" id="achievements">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Gamification</span>
+        <h2>Your Fitness Journey</h2>
+        <p>Track your streaks, earn badges, and take on challenges.</p>
+      </div>
+      <div class="streak-card">
+        <div class="streak-flame"><i class="fas fa-fire"></i></div>
+        <div class="streak-info">
+          <span class="streak-count" id="streakCount">0</span>
+          <span class="streak-label">Day Streak</span>
+        </div>
+        <button class="btn-primary btn-small" id="logDayBtn"><i class="fas fa-plus"></i> Log Today</button>
+      </div>
+      <div class="badges-grid" id="badgesContainer"></div>
+      <div class="challenge-card" id="challengeCard">
+        <h3 id="challengeTitle">7-Day Fitness Challenge</h3>
+        <p id="challengeDesc">Complete 7 days of workouts to earn the "Athlete" badge!</p>
+        <div class="challenge-progress">
+          <div class="challenge-bar"><div class="challenge-fill" id="challengeProgress"></div></div>
+          <span id="challengeCount">0/7</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER / REPORT -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <i class="fas fa-dumbbell"></i> FITHOMEY
+          <p>Your AI-powered fitness companion.</p>
+        </div>
+        <div class="footer-links">
+          <button class="btn-secondary btn-small" id="downloadReport"><i class="fas fa-download"></i> Download Report</button>
+          <button class="btn-secondary btn-small" id="shareBtn"><i class="fas fa-share-alt"></i> Share</button>
+        </div>
+      </div>
+      <div class="footer-bottom">&copy; 2026 FITHOMEY. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- AI CHATBOT COACH -->
+  <div class="chatbot-btn" id="chatbotBtn">
+    <i class="fas fa-robot"></i>
+  </div>
+
+  <div class="chatbot-window" id="chatbotWindow">
+    <div class="chatbot-header">
+      <div class="chatbot-avatar"><i class="fas fa-robot"></i></div>
+      <div class="chatbot-info">
+        <span class="chatbot-name">FITHOMEY AI Coach</span>
+        <span class="chatbot-status">Online</span>
+      </div>
+      <div class="chatbot-close" id="chatbotClose"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="chatbot-messages" id="chatbotMessages">
+      <div class="message bot">
+        <div class="msg-content">Hi! I'm your FITHOMEY AI Fitness Coach. Ask me anything about fitness, diet, or health! 💪</div>
+      </div>
+    </div>
+    <div class="chatbot-input">
+      <input type="text" id="chatInput" placeholder="Ask me anything about fitness...">
+      <button id="chatSend"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
