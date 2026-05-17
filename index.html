@@ -32,7 +32,7 @@
   <section class="hero" id="home">
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <div class="hero-badge">Made by KILKARI &bull; AI-Powered Fitness Assistant</div>
+      <div class="hero-badge">Made by ABHIRAJ &bull; AI-Powered Fitness Assistant</div>
       <h1 class="hero-title">Transform Your Body<br><span class="gradient-text">With FITHOMEY</span></h1>
       <p class="hero-subtitle">Your personal AI fitness coach that analyzes your health, creates custom plans, and guides you every step of the way.</p>
       <div class="hero-cta">
@@ -270,6 +270,7 @@
   <!-- AI CHATBOT COACH -->
   <div class="chatbot-btn" id="chatbotBtn">
     <i class="fas fa-robot"></i>
+    <div class="chatbot-pulse"></div>
   </div>
 
   <div class="chatbot-window" id="chatbotWindow">
@@ -277,17 +278,18 @@
       <div class="chatbot-avatar"><i class="fas fa-robot"></i></div>
       <div class="chatbot-info">
         <span class="chatbot-name">FITHOMEY AI Coach</span>
-        <span class="chatbot-status">Online</span>
+        <span class="chatbot-status"><span class="status-dot"></span> Online</span>
       </div>
-      <div class="chatbot-close" id="chatbotClose"><i class="fas fa-times"></i></div>
-    </div>
-    <div class="chatbot-messages" id="chatbotMessages">
-      <div class="message bot">
-        <div class="msg-content">Hi! I'm your FITHOMEY AI Fitness Coach. Ask me anything about fitness, diet, or health! 💪</div>
+      <div class="chatbot-actions">
+        <button class="chat-action-btn" id="chatClearBtn" title="Clear chat"><i class="fas fa-trash-alt"></i></button>
+        <button class="chat-action-btn" id="chatbotClose"><i class="fas fa-times"></i></button>
       </div>
     </div>
+    <div class="chatbot-messages" id="chatbotMessages"></div>
+    <div class="chatbot-quick-replies" id="quickReplies"></div>
     <div class="chatbot-input">
       <input type="text" id="chatInput" placeholder="Ask me anything about fitness...">
+      <button class="chat-voice-btn" id="voiceBtn" title="Voice input"><i class="fas fa-microphone"></i></button>
       <button id="chatSend"><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
