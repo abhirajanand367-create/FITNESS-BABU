@@ -42,8 +42,12 @@ body{
 .nav-container{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:16px 24px}
 .nav-brand{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800;color:var(--neon-green)}
 .nav-brand i{font-size:1.6rem}
-.nav-logo{height:32px;width:auto;display:block}
-.footer-logo{height:24px;width:auto;vertical-align:middle;margin-right:6px}
+.nav-logo{height:36px;width:auto;display:block;transition:var(--transition)}
+.nav-logo:hover{filter:drop-shadow(0 0 8px rgba(0,255,136,0.5));transform:scale(1.05)}
+.hero-logo{height:90px;width:auto;margin-bottom:12px;display:inline-block;filter:drop-shadow(0 0 20px rgba(0,255,136,0.3));animation:logoFloat 3s ease-in-out infinite}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.footer-logo{height:28px;width:auto;vertical-align:middle;margin-right:8px;transition:var(--transition)}
+.footer-logo:hover{filter:drop-shadow(0 0 6px rgba(0,255,136,0.4))}
 .nav-links{display:flex;gap:32px;list-style:none}
 .nav-links a{color:var(--text-secondary);text-decoration:none;font-size:0.9rem;font-weight:500;transition:var(--transition);position:relative}
 .nav-links a:hover,.nav-links a.active{color:var(--neon-green)}
