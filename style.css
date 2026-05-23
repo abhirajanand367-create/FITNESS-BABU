@@ -61,12 +61,13 @@ body{
 }
 .hero-bg-img{
   position:absolute;inset:0;background-size:cover;background-position:center;
-  opacity:0.06;z-index:0
+  opacity:0.2;z-index:0
 }
 .hero-overlay{
   position:absolute;inset:0;z-index:1;
-  background:radial-gradient(ellipse at 20% 50%,rgba(0,232,135,0.06) 0%,transparent 50%),
-             radial-gradient(ellipse at 80% 50%,rgba(0,184,255,0.06) 0%,transparent 50%)
+  background:radial-gradient(ellipse at 20% 50%,rgba(0,232,135,0.08) 0%,transparent 50%),
+             radial-gradient(ellipse at 80% 50%,rgba(0,184,255,0.06) 0%,transparent 50%);
+  background-color:rgba(30,34,48,0.55)
 }
 .hero-content{position:relative;z-index:2;max-width:800px;text-align:center}
 .hero-logo{height:90px;width:auto;margin-bottom:12px;display:inline-block;filter:drop-shadow(0 4px 20px rgba(0,232,135,0.25));animation:logoFloat 3s ease-in-out infinite}
@@ -102,7 +103,7 @@ body{
 .section{padding:100px 24px;border-bottom:1px solid var(--border)}
 .section-bg-img{
   position:absolute;inset:0;background-size:cover;background-position:center;
-  opacity:0.04;z-index:0;pointer-events:none
+  opacity:0.12;z-index:0;pointer-events:none
 }
 .container{max-width:1100px;margin:0 auto;position:relative;z-index:1}
 .section-header{text-align:center;margin-bottom:48px}

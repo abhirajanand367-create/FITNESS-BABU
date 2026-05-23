@@ -143,7 +143,8 @@
     var activity = activityHidden.value;
     var diet = dietHidden.value;
     var menstruation = menstruationHidden ? menstruationHidden.value === 'yes' : false;
-    return { age: age, height: height, weight: weight, gender: gender, activity: activity, diet: diet, menstruation: menstruation };
+    var problem = ($('problem') ? $('problem').value : 'general') || 'general';
+    return { age: age, height: height, weight: weight, gender: gender, activity: activity, diet: diet, menstruation: menstruation, problem: problem };
   }
 
   var badgesData = [
@@ -256,10 +257,10 @@
     dashboardSec.style.display = 'block';
     planSec.style.display = 'block';
 
-    generatePlan({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, bmi: bmi, tdee: tdee });
+    generatePlan({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, problem: d.problem, bmi: bmi, tdee: tdee });
     dashboardSec.scrollIntoView({ behavior: 'smooth' });
     unlockBadge('fitpro');
-    safeSet('fithomey_profile', JSON.stringify({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, bmi: bmi, tdee: tdee, water: water, score: score, riskLevel: riskLevel }));
+    safeSet('fithomey_profile', JSON.stringify({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, problem: d.problem, bmi: bmi, tdee: tdee, water: water, score: score, riskLevel: riskLevel }));
   }
 
   // ===== PLAN GENERATOR =====
@@ -267,6 +268,7 @@
     var age = data.age, gender = data.gender, weight = data.weight, height = data.height;
     var bmi = data.bmi, activity = data.activity, tdee = data.tdee, diet = data.diet || 'nonveg';
     var isMenstruating = gender === 'female' && data.menstruation === true;
+    var problem = data.problem || 'general';
 
     // Age groups
     var isYoung = age < 18, isAdult = age >= 18 && age <= 35, isMid = age > 35 && age <= 50, isSenior = age > 50;
@@ -289,12 +291,157 @@
       }
       return r;
     }
+    var problemData = {
+      weight_loss: {
+        home: ['Jumping Jacks (3x30)','High Knees (3x30s)','Burpees (3x10)','Mountain Climbers (3x25s)','Plank Jacks (3x12)','Bicycle Crunches (3x15 each)','Squat Jumps (3x10)','Push-ups (3x12)','Lunges (3x10 each)','Tuck Jumps (3x8)','Box Jumps (3x8)','Flutter Kicks (3x20)','Heisman Shuffle (3x20)','Speed Skaters (3x10 each)','Plank with Shoulder Taps (3x12 each)'],
+        gym: ['Treadmill HIIT (20 min)','Deadlift (4x8)','Leg Press (4x15)','Lat Pulldown (4x12)','Cable Row (4x12)','Dumbbell Bench Press (4x10)','HIIT Finisher (15 min)','Walking Lunges (3x12 each)','Cable Crunch (3x15)','Battle Ropes (30s x 5)','Kettlebell Swings (3x15)','Box Jumps (3x10)','Farmers Walk (3x30s)','Rowing Machine (15 min)','Plank (3x45s)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + green tea + chia seeds'},{name:'Snack',desc:'Green apple + almonds (10)'},{name:'Lunch',desc:'Quinoa salad + chickpeas + cucumber + lemon'},{name:'Snack',desc:'Greek yogurt + flax seeds'},{name:'Dinner',desc:'Grilled tofu + broccoli + cauliflower rice + stir-fry'}],
+        meals_nv: [{name:'Breakfast',desc:'Egg white omelette + oatmeal + green tea'},{name:'Snack',desc:'Apple + almonds (10)'},{name:'Lunch',desc:'Grilled chicken salad + quinoa + lemon'},{name:'Snack',desc:'Greek yogurt + chia seeds'},{name:'Dinner',desc:'Steamed fish + broccoli + asparagus'}],
+        eat: ['🥬 Leafy Greens','🍗 Lean Protein','🫐 Berries','🥜 Nuts (limited)','🌾 Quinoa','🍵 Green Tea','🥦 Cruciferous Veggies','🌱 Sprouts','🥑 Avocado (limited)','🫘 Legumes'],
+        avoid: ['🚫 Sugar-Sweetened Beverages','🚫 Fried Foods','🚫 White Rice/Bread','🚫 High-Sugar Fruits','🚫 Packaged Snacks','🚫 Alcohol','🚫 Excess Oil','🚫 Refined Carbs'],
+        bed:'10:00 PM',wake:'6:00 AM',nap:'20 min after 2 PM',dur:'7-8 hours',label:'🔥 Weight Loss Mode'
+      },
+      weight_gain: {
+        home: ['Bodyweight Squats (3x15)','Push-ups (3x12)','Lunges (3x12 each)','Plank (3x30s)','Glute Bridges (3x15)','Crunches (3x15)','Calf Raises (3x20)','Diamond Push-ups (3x10)','Step-ups (3x12 each)','Tricep Dips (3x10)','Wall Sit (3x30s)','Jump Squats (3x8)','Incline Push-ups (3x10)','Chair Dips (3x10)','Bicycle Crunches (3x15 each)'],
+        gym: ['Squats (4x10)','Bench Press (4x10)','Barbell Row (4x10)','Overhead Press (4x8)','Deadlift (3x8)','Pull-ups (3x8)','Bicep Curls (3x12)','Leg Press (4x12)','Dumbbell Fly (3x10)','Tricep Pushdown (3x12)','Cable Crunch (3x12)','Face Pulls (3x12)','Hammer Curls (3x10)','Chest Fly (3x10)','Shrugs (3x12)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + banana + peanut butter + soy milk + nuts'},{name:'Snack',desc:'Smoothie with protein powder + banana + nut butter'},{name:'Lunch',desc:'Chickpea wrap + avocado + quinoa + yogurt + cheese'},{name:'Snack',desc:'Trail mix + banana + protein bar'},{name:'Dinner',desc:'Paneer curry + rice + dal + mixed veggies + ghee'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (4) + whole grain toast + avocado + milk'},{name:'Snack',desc:'Protein shake + banana + peanut butter'},{name:'Lunch',desc:'Chicken breast (200g) + brown rice + sweet potato + veggies'},{name:'Snack',desc:'Cottage cheese + almonds + dried fruits'},{name:'Dinner',desc:'Lean steak (200g) + mashed potatoes + veggies + butter'}],
+        eat: ['🥚 Eggs','🥩 Red Meat','🥜 Nuts & Butters','🥑 Avocado','🍌 Bananas','🌾 Whole Grains','🥛 Full-Fat Dairy','🍇 Dried Fruits','🧀 Cheese','🫘 Legumes','🍚 Rice','🥔 Potatoes'],
+        avoid: ['🚫 Low-Calorie Foods','🚫 Sugary Drinks (empty cals)','🚫 Excess Fiber (fills you up)','🚫 Diet/Sugar-Free Products','🚫 Salads as meals','🚫 Excess Water Before Meals'],
+        bed:'10:30 PM',wake:'7:00 AM',nap:'30 min after 1 PM',dur:'8+ hours',label:'💪 Mass Building Mode'
+      },
+      diabetes: {
+        home: ['Brisk Walking (30 min)','Bodyweight Squats (3x12)','Push-ups (3x10)','Glute Bridges (3x12)','Plank (3x20s)','Chair Dips (3x10)','Standing Calf Raises (3x15)','Seated Leg Raises (3x12)','Wall Push-ups (3x12)','Marching in Place (3x30s)','Heel Raises (3x15)','Cat-Cow Stretch (10)','Arm Circles (30s)','Knee Push-ups (3x8)','Side Leg Raises (3x10 each)'],
+        gym: ['Treadmill Walk (20 min)','Seated Cable Row (3x12)','Lat Pulldown (3x12)','Leg Press (3x15)','Chest Press Machine (3x12)','Stationary Bike (15 min)','Elliptical (15 min)','Hip Abductor (3x12)','Shoulder Press Machine (3x10)','Plank (3x20s)','Seated Leg Curl (3x12)','Cable Bicep Curl (3x10)','Tricep Pushdown (3x10)','Back Extension (3x10)','Light Dumbbell Press (3x10)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + cinnamon + berries + nuts + soy milk (no sugar)'},{name:'Snack',desc:'Handful of almonds + green tea'},{name:'Lunch',desc:'Quinoa + chickpea salad + leafy greens + lemon dressing'},{name:'Snack',desc:'Greek yogurt + chia seeds'},{name:'Dinner',desc:'Grilled tofu + steamed broccoli + cauliflower rice + stir-fry'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + whole grain toast + avocado (no sugar)'},{name:'Snack',desc:'Almonds + walnuts + green tea'},{name:'Lunch',desc:'Grilled chicken + quinoa + leafy greens + lemon'},{name:'Snack',desc:'Greek yogurt + flax seeds'},{name:'Dinner',desc:'Grilled fish + steamed veggies + small sweet potato'}],
+        eat: ['🥬 Leafy Greens','🫐 Berries','🥜 Nuts & Seeds','🌾 Whole Grains (low GI)','🥛 Greek Yogurt','🐟 Fatty Fish','🫘 Legumes (limited)','🥑 Avocado','🫒 Olive Oil','🍵 Green Tea','🧅 Cinnamon','🍠 Sweet Potato (limited)'],
+        avoid: ['🚫 Sugar & Sweets','🚫 White Rice/Bread','🚫 Sugary Drinks','🚫 Fruit Juices','🚫 Fried Foods','🚫 Processed Carbs','🚫 Sweetened Yogurts','🚫 Alcohol','🚫 Dried Fruits (excess)','🚫 High-GI Fruits (mango, watermelon)'],
+        bed:'10:00 PM',wake:'6:00 AM',nap:'20 min after lunch',dur:'7-8 hours',label:'🩸 Diabetes Care'
+      },
+      pcod: {
+        home: ['Yoga Flow (15 min)','Brisk Walking (20 min)','Bodyweight Squats (3x12)','Glute Bridges (3x15)','Plank (3x25s)','Cat-Cow Stretch (10)','Child\'s Pose (1 min)','Seated Twist (30s each)','Butterfly Stretch (30s)','Standing Calf Raises (3x15)','Lunges (3x10 each)','Knee Push-ups (3x8)','Bird Dog (3x8 each)','Side Plank (3x15s each)','Cobra Stretch (30s)'],
+        gym: ['Treadmill Walk (20 min)','Seated Cable Row (3x12)','Lat Pulldown (3x12)','Leg Press (3x15)','Chest Press Machine (3x12)','Hip Thrust Machine (3x15)','Stationary Bike (15 min)','Elliptical (15 min)','Dumbbell Shoulder Press (3x10)','Cable Crunch (3x12)','Glute Kickbacks (3x12 each)','Seated Leg Curl (3x12)','Hip Abductor (3x12)','Plank (3x25s)','Back Extension (3x10)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + cinnamon + soy milk'},{name:'Snack',desc:'Handful of almonds + green tea'},{name:'Lunch',desc:'Quinoa salad + chickpeas + avocado + leafy greens'},{name:'Snack',desc:'Greek yogurt + pumpkin seeds'},{name:'Dinner',desc:'Grilled tofu + broccoli + sweet potato + stir-fry'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + avocado + whole grain toast + flax seeds'},{name:'Snack',desc:'Almonds + walnuts + green tea'},{name:'Lunch',desc:'Grilled chicken + quinoa + leafy greens + avocado'},{name:'Snack',desc:'Greek yogurt + pumpkin seeds'},{name:'Dinner',desc:'Grilled salmon + broccoli + sweet potato'}],
+        eat: ['🥬 Leafy Greens','🥚 Eggs','🐟 Fatty Fish (salmon)','🥑 Avocado','🥜 Nuts & Seeds (flax, pumpkin)','🌾 Whole Grains (low GI)','🫐 Berries','🥛 Greek Yogurt','🫘 Legumes','🍵 Green Tea','🫒 Olive Oil','🧅 Cinnamon'],
+        avoid: ['🚫 Sugar & Sweets','🚫 White Rice/Bread','🚫 Sugary Drinks','🚫 Fried Foods','🚫 Dairy (excess)','🚫 Soy (excess)','🚫 Processed Carbs','🚫 Alcohol','🚫 Caffeine (excess)'],
+        bed:'10:30 PM',wake:'6:30 AM',nap:'20 min after lunch',dur:'8 hours',label:'🌸 PCOD/PCOS Care'
+      },
+      thyroid: {
+        home: ['Brisk Walking (25 min)','Bodyweight Squats (3x12)','Push-ups (3x10)','Glute Bridges (3x12)','Plank (3x20s)','Lunges (3x10 each)','Standing Calf Raises (3x15)','Cat-Cow Stretch (10)','Seated Row with Band (3x12)','Arm Circles (30s each)','Neck Rolls (30s each)','Marching in Place (3x30s)','Wall Push-ups (3x10)','Chair Dips (3x10)','Bird Dog (3x8 each)'],
+        gym: ['Treadmill Walk (20 min)','Leg Press (3x15)','Lat Pulldown (3x12)','Seated Cable Row (3x12)','Chest Press Machine (3x12)','Stationary Bike (15 min)','Elliptical (15 min)','Dumbbell Shoulder Press (3x10)','Hip Abductor (3x12)','Plank (3x25s)','Cable Bicep Curl (3x10)','Tricep Pushdown (3x10)','Seated Leg Curl (3x12)','Back Extension (3x10)','Cable Crunch (3x12)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + Brazil nuts (2) + soy milk'},{name:'Snack',desc:'Apple + almonds + green tea'},{name:'Lunch',desc:'Quinoa salad + chickpeas + leafy greens + avocado'},{name:'Snack',desc:'Greek yogurt + pumpkin seeds'},{name:'Dinner',desc:'Grilled tofu + stir-fried veggies + brown rice (small)'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + whole grain toast + avocado + Brazil nuts (2)'},{name:'Snack',desc:'Apple + almonds + green tea'},{name:'Lunch',desc:'Grilled chicken + quinoa + leafy greens'},{name:'Snack',desc:'Greek yogurt + pumpkin seeds'},{name:'Dinner',desc:'Grilled fish + steamed veggies + small sweet potato'}],
+        eat: ['🐟 Fatty Fish (salmon)','🥚 Eggs','🥜 Brazil Nuts (2/day)','🫐 Berries','🥬 Leafy Greens','🥜 Nuts & Seeds','🌾 Whole Grains','🫘 Legumes','🥛 Greek Yogurt','🫒 Olive Oil','🍵 Green Tea','🥑 Avocado'],
+        avoid: ['🚫 Soy (excess - interferes with thyroid meds)','🚫 Cruciferous Veggies (raw excess)','🚫 Gluten (if sensitive)','🚫 Sugar & Sweets','🚫 Processed Carbs','🚫 Alcohol','🚫 Caffeine (excess)','🚫 Iodine Supplements (without doctor)'],
+        bed:'10:30 PM',wake:'6:30 AM',nap:'20 min after lunch',dur:'8 hours',label:'🦋 Thyroid Balance'
+      },
+      high_bp: {
+        home: ['Brisk Walking (30 min)','Cat-Cow Stretch (10)','Child\'s Pose (1 min)','Seated Twist (30s each)','Butterfly Stretch (30s)','Neck Rolls (30s each)','Shoulder Rolls (20)','Standing Calf Raises (3x12)','Chair Dips (3x8)','Marching in Place (3x20s)','Wall Push-ups (3x10)','Seated Leg Raises (3x10)','Deep Breathing (5 min)','Ankle Rotations (20 each)','Gentle Yoga Flow (10 min)'],
+        gym: ['Treadmill Walk (20 min)','Stationary Bike (15 min)','Seated Chest Press (3x10)','Lat Pulldown (3x10)','Leg Press (3x12)','Seated Cable Row (3x10)','Elliptical (15 min)','Shoulder Press Machine (3x10)','Hip Abductor (3x12)','Plank (3x20s)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Back Extension (3x8)','Seated Leg Curl (3x10)','Cable Crunch (3x10)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + banana (low salt)'},{name:'Snack',desc:'Apple + unsalted almonds + green tea'},{name:'Lunch',desc:'Quinoa + chickpea salad + leafy greens + lemon (no salt added)'},{name:'Snack',desc:'Greek yogurt + berries'},{name:'Dinner',desc:'Grilled tofu + steamed veggies + brown rice (low sodium)'}],
+        meals_nv: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + banana (low salt)'},{name:'Snack',desc:'Apple + unsalted almonds + green tea'},{name:'Lunch',desc:'Grilled chicken + quinoa + leafy greens (no salt added)'},{name:'Snack',desc:'Greek yogurt + berries'},{name:'Dinner',desc:'Grilled fish + steamed broccoli + sweet potato'}],
+        eat: ['🥬 Leafy Greens','🍌 Bananas','🫐 Berries','🥑 Avocado','🌾 Oats & Whole Grains','🥜 Unsalted Nuts','🫘 Legumes','🫒 Olive Oil','🍵 Green Tea','🐟 Fatty Fish','🧄 Garlic','🍠 Sweet Potato'],
+        avoid: ['🚫 Excess Salt/Sodium','🚫 Processed Foods','🚫 Fried Foods','🚫 Alcohol','🚫 Caffeine (excess)','🚫 Sugary Drinks','🚫 Red Meat (excess)','🚫 Pickled/Preserved Foods','🚫 Cold Drinks'],
+        bed:'10:00 PM',wake:'6:00 AM',nap:'20 min after lunch',dur:'7-8 hours',label:'❤️ BP Care'
+      },
+      cholesterol: {
+        home: ['Brisk Walking (30 min)','Bodyweight Squats (3x12)','Push-ups (3x10)','Plank (3x25s)','Glute Bridges (3x12)','Lunges (3x10 each)','Standing Calf Raises (3x15)','Jumping Jacks (3x20)','Mountain Climbers (3x20s)','Cat-Cow Stretch (10)','Arm Circles (30s)','High Knees (3x20s)','Chair Dips (3x8)','Heel Raises (3x15)','Knee Push-ups (3x8)'],
+        gym: ['Treadmill Walk (20 min)','Rowing Machine (15 min)','Leg Press (3x15)','Lat Pulldown (3x12)','Seated Cable Row (3x12)','Chest Press Machine (3x12)','Stationary Bike (15 min)','Elliptical (15 min)','Cable Crunch (3x12)','Plank (3x30s)','Dumbbell Shoulder Press (3x10)','Walking Lunges (3x10 each)','Seated Leg Curl (3x12)','Back Extension (3x10)','Hip Abductor (3x12)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + almonds + soy milk'},{name:'Snack',desc:'Apple + walnuts + green tea'},{name:'Lunch',desc:'Quinoa + chickpea + avocado + leafy greens + lemon'},{name:'Snack',desc:'Greek yogurt + chia seeds'},{name:'Dinner',desc:'Grilled tofu + broccoli + roasted veggies + olive oil'}],
+        meals_nv: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + walnuts'},{name:'Snack',desc:'Apple + almonds + green tea'},{name:'Lunch',desc:'Grilled salmon + quinoa + leafy greens + avocado'},{name:'Snack',desc:'Greek yogurt + chia seeds'},{name:'Dinner',desc:'Grilled chicken breast + steamed broccoli + sweet potato'}],
+        eat: ['🌾 Oats & Barley','🥜 Nuts (almonds, walnuts)','🐟 Fatty Fish (salmon, mackerel)','🥑 Avocado','🫒 Olive Oil','🥬 Leafy Greens','🫐 Berries','🫘 Legumes','🍵 Green Tea','🧄 Garlic','🌱 Flax & Chia Seeds','🍎 Apples'],
+        avoid: ['🚫 Trans Fats','🚫 Fried Foods','🚫 Red Meat (excess)','🚫 Butter & Cream','🚫 Processed Meats','🚫 Sugary Drinks','🚫 White Bread/Pasta','🚫 Full-Fat Dairy (excess)','🚫 Alcohol','🚫 Coconut Oil (excess)'],
+        bed:'10:30 PM',wake:'6:30 AM',nap:'20 min after lunch',dur:'7-8 hours',label:'💚 Cholesterol Control'
+      },
+      joint_pain: {
+        home: ['Gentle Yoga (15 min)','Water-like Walking (20 min)','Cat-Cow Stretch (10)','Child\'s Pose (1 min)','Seated Leg Raises (3x10)','Seated Spinal Twist (30s each)','Butterfly Stretch (30s)','Neck Rolls (30s each)','Shoulder Rolls (20)','Ankle Rotations (20 each)','Wrist Stretches (30s)','Standing Calf Raises (3x10)','Chair Sit-to-Stand (3x8)','Seated Hamstring Stretch (30s each)','Deep Breathing (5 min)'],
+        gym: ['Stationary Bike (15 min)','Seated Chest Press (3x10)','Seated Cable Row (3x10)','Lat Pulldown (3x10)','Leg Press (3x12)','Seated Shoulder Press (3x10)','Hip Abductor Machine (3x12)','Seated Leg Curl (3x10)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Plank (3x15s)','Back Extension (3x8)','Elliptical (10 min)','Arm Curl Machine (3x10)','Swimming (if available)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + walnuts + turmeric + soy milk'},{name:'Snack',desc:'Apple + almonds + ginger tea'},{name:'Lunch',desc:'Quinoa + chickpea + leafy greens + broccoli + turmeric'},{name:'Snack',desc:'Greek yogurt + chia seeds + berries'},{name:'Dinner',desc:'Grilled tofu + stir-fried veggies + brown rice + turmeric'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + whole grain toast + avocado + turmeric'},{name:'Snack',desc:'Apple + walnuts + ginger tea'},{name:'Lunch',desc:'Grilled salmon + quinoa + broccoli + turmeric'},{name:'Snack',desc:'Greek yogurt + chia seeds + berries'},{name:'Dinner',desc:'Grilled chicken + sweet potato + steamed veggies'}],
+        eat: ['🐟 Fatty Fish (salmon, sardines)','🥜 Walnuts & Almonds','🫐 Berries','🥬 Leafy Greens','🥦 Broccoli','🌾 Whole Grains','🫒 Olive Oil','🧅 Turmeric & Ginger','🍵 Green Tea','🥛 Greek Yogurt','🫘 Legumes','🍊 Citrus Fruits'],
+        avoid: ['🚫 Fried Foods','🚫 Processed Meats','🚫 Sugary Drinks','🚫 White Rice/Bread','🚫 Alcohol','🚫 Excess Salt','🚫 Red Meat (excess)','🚫 Nightshade Veggies (if sensitive)','🚫 Dairy (if sensitive)'],
+        bed:'10:00 PM',wake:'6:00 AM',nap:'30 min after lunch',dur:'8 hours',label:'🦴 Joint Care'
+      },
+      digestive: {
+        home: ['Gentle Walking (15 min)','Cat-Cow Stretch (10)','Seated Twist (30s each)','Child\'s Pose (1 min)','Deep Breathing (5 min)','Butterfly Stretch (30s)','Neck Rolls (30s each)','Shoulder Rolls (20)','Ankle Rotations (20 each)','Seated Forward Fold (30s)','Standing Side Bends (30s each)','Supine Twist (30s each)','Knee-to-Chest (30s each)','Happy Baby Pose (30s)','Corpse Pose (5 min)'],
+        gym: ['Treadmill Walk (15 min)','Stationary Bike (15 min)','Seated Chest Press (3x8)','Lat Pulldown (3x10)','Seated Cable Row (3x10)','Leg Press (3x12)','Elliptical (10 min)','Shoulder Press Machine (3x8)','Plank (3x15s)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Hip Abductor (3x10)','Seated Leg Curl (3x10)','Back Extension (3x8)','Cable Crunch (gentle, 3x8)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + banana + ginger + honey + almond milk'},{name:'Snack',desc:'Papaya + probiotic drink'},{name:'Lunch',desc:'Rice + dal + steamed zucchini + turmeric + cumin'},{name:'Snack',desc:'Coconut water + banana'},{name:'Dinner',desc:'Veg soup + khichdi (rice+lentil) + ghee (small)'}],
+        meals_nv: [{name:'Breakfast',desc:'Oatmeal + banana + ginger + honey'},{name:'Snack',desc:'Papaya + probiotic drink'},{name:'Lunch',desc:'Grilled fish + steamed rice + zucchini + turmeric'},{name:'Snack',desc:'Coconut water + banana'},{name:'Dinner',desc:'Chicken soup + steamed veggies + small rice'}],
+        eat: ['🍌 Bananas','🍚 White Rice (easy to digest)','🥬 Cooked Greens (not raw)','🫘 Lentils (soaked/cooked well)','🥔 Potatoes (cooked)','🍊 Papaya','🥥 Coconut Water','🧅 Ginger & Cumin','🥛 Probiotic Yogurt','🍚 Khichdi','🍵 Herbal Tea (peppermint, ginger)'],
+        avoid: ['🚫 Spicy Foods','🚫 Fried Foods','🚫 Raw Salad (hard to digest)','🚫 Dairy (if sensitive)','🚫 Beans (if gas-prone)','🚫 Carbonated Drinks','🚫 Alcohol','🚫 Caffeine (excess)','🚫 Processed Foods','🚫 Citrus (excess acid)'],
+        bed:'10:30 PM',wake:'6:30 AM',nap:'Not recommended',dur:'8 hours',label:'🌿 Digestive Health'
+      },
+      anemia: {
+        home: ['Brisk Walking (15 min)','Bodyweight Squats (3x8)','Push-ups (3x8)','Glute Bridges (3x10)','Plank (3x15s)','Cat-Cow Stretch (10)','Seated Leg Raises (3x8)','Standing Calf Raises (3x10)','Arm Circles (30s)','Deep Breathing (5 min)','Chair Dips (3x8)','Wall Push-ups (3x8)','Knee Push-ups (3x6)','Marching in Place (3x20s)','Child\'s Pose (1 min)'],
+        gym: ['Treadmill Walk (15 min)','Seated Chest Press (3x8)','Lat Pulldown (3x8)','Leg Press (3x10)','Seated Cable Row (3x8)','Stationary Bike (10 min)','Shoulder Press Machine (3x8)','Hip Abductor (3x8)','Plank (3x15s)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Back Extension (3x8)','Seated Leg Curl (3x8)','Cable Crunch (3x8)','Elliptical (10 min)'],
+        meals_v: [{name:'Breakfast',desc:'Iron-fortified oatmeal + spinach + berries + pumpkin seeds + orange juice'},{name:'Snack',desc:'Dates + almonds + coconut water'},{name:'Lunch',desc:'Lentil soup + quinoa + roasted beetroot + leafy greens + lemon'},{name:'Snack',desc:'Pomegranate + walnuts'},{name:'Dinner',desc:'Palak tofu + brown rice + steamed veggies + vitamin C salad'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + whole grain toast + spinach + orange juice'},{name:'Snack',desc:'Dates + almonds + coconut water'},{name:'Lunch',desc:'Lean red meat + quinoa + spinach + beetroot + lemon'},{name:'Snack',desc:'Pomegranate + walnuts'},{name:'Dinner',desc:'Grilled chicken + leafy greens + sweet potato + vitamin C veggies'}],
+        eat: ['🥬 Spinach & Leafy Greens','🥩 Red Meat (lean)','🥚 Eggs','🫘 Lentils & Beans','🥜 Pumpkin Seeds','🍇 Dried Fruits (dates, raisins)','🍊 Citrus Fruits (vitamin C)','🍎 Pomegranate','🧅 Beetroot','🌾 Iron-Fortified Grains','🥛 Tofu','🥜 Nuts'],
+        avoid: ['🚫 Tea/Coffee with Meals (blocks iron)','🚫 Calcium Supplements with Iron','🚫 Fried Foods','🚫 Sugary Drinks','🚫 Processed Foods','🚫 Excess Dairy (calcium blocks iron)'],
+        bed:'10:00 PM',wake:'6:00 AM',nap:'30 min after lunch',dur:'8-9 hours',label:'🩸 Anemia Care'
+      },
+      heart: {
+        home: ['Brisk Walking (30 min)','Cat-Cow Stretch (10)','Child\'s Pose (1 min)','Seated Twist (30s each)','Butterfly Stretch (30s)','Neck Rolls (30s each)','Shoulder Rolls (20)','Standing Calf Raises (3x12)','Marching in Place (3x30s)','Wall Push-ups (3x10)','Chair Dips (3x8)','Seated Leg Raises (3x10)','Deep Breathing (5 min)','Gentle Yoga (10 min)','Ankle Rotations (20 each)'],
+        gym: ['Treadmill Walk (20 min)','Stationary Bike (15 min)','Seated Chest Press (3x10)','Lat Pulldown (3x10)','Leg Press (3x12)','Seated Cable Row (3x10)','Elliptical (15 min)','Shoulder Press Machine (3x8)','Hip Abductor (3x10)','Plank (3x20s)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Seated Leg Curl (3x10)','Back Extension (3x8)','Rowing Machine (10 min)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + walnuts + soy milk'},{name:'Snack',desc:'Apple + almonds + green tea'},{name:'Lunch',desc:'Quinoa + chickpea + avocado + leafy greens + lemon'},{name:'Snack',desc:'Greek yogurt + chia seeds + berries'},{name:'Dinner',desc:'Grilled tofu + steamed broccoli + sweet potato + olive oil'}],
+        meals_nv: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + walnuts'},{name:'Snack',desc:'Apple + almonds + green tea'},{name:'Lunch',desc:'Grilled salmon + quinoa + leafy greens + avocado'},{name:'Snack',desc:'Greek yogurt + chia seeds + berries'},{name:'Dinner',desc:'Grilled chicken breast + steamed veggies + sweet potato'}],
+        eat: ['🐟 Fatty Fish (salmon, mackerel)','🌾 Oats & Barley','🥜 Nuts (almonds, walnuts)','🥑 Avocado','🫒 Olive Oil','🥬 Leafy Greens','🫐 Berries','🫘 Legumes','🍵 Green Tea','🧄 Garlic','🌱 Flax & Chia Seeds','🍎 Apples & Citrus'],
+        avoid: ['🚫 Trans Fats','🚫 Fried Foods','🚫 Red Meat (excess)','🚫 Processed Meats','🚫 Sugary Drinks','🚫 Excess Salt','🚫 Alcohol','🚫 Butter & Cream','🚫 Refined Carbs'],
+        bed:'10:00 PM',wake:'6:00 AM',nap:'20 min after lunch',dur:'7-8 hours',label:'💓 Heart Health'
+      },
+      liver: {
+        home: ['Brisk Walking (25 min)','Cat-Cow Stretch (10)','Seated Twist (30s each)','Child\'s Pose (1 min)','Deep Breathing (5 min)','Butterfly Stretch (30s)','Standing Side Bends (30s each)','Neck Rolls (30s)','Shoulder Rolls (20)','Marching in Place (3x30s)','Knee Push-ups (3x8)','Chair Dips (3x8)','Ankle Rotations (20 each)','Gentle Yoga (10 min)','Corpse Pose (5 min)'],
+        gym: ['Treadmill Walk (20 min)','Stationary Bike (15 min)','Seated Chest Press (3x10)','Lat Pulldown (3x10)','Leg Press (3x12)','Seated Cable Row (3x10)','Elliptical (15 min)','Shoulder Press Machine (3x8)','Hip Abductor (3x10)','Plank (3x20s)','Cable Crunch (3x10)','Seated Leg Curl (3x10)','Back Extension (3x8)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + walnuts + turmeric + almond milk'},{name:'Snack',desc:'Apple + green tea (no sugar)'},{name:'Lunch',desc:'Quinoa + chickpea + leafy greens + beetroot + lemon'},{name:'Snack',desc:'Cucumber + carrot sticks + hummus'},{name:'Dinner',desc:'Grilled tofu + broccoli + cauliflower rice + turmeric'}],
+        meals_nv: [{name:'Breakfast',desc:'Oatmeal + berries + walnuts + turmeric'},{name:'Snack',desc:'Apple + green tea (no sugar)'},{name:'Lunch',desc:'Grilled fish + quinoa + leafy greens + beetroot'},{name:'Snack',desc:'Cucumber + carrot sticks'},{name:'Dinner',desc:'Grilled chicken breast + steamed broccoli + turmeric'}],
+        eat: ['🥬 Leafy Greens','🧅 Turmeric','🫐 Berries','🥜 Walnuts','🫒 Olive Oil','🍵 Green Tea','🧄 Garlic','🍎 Apples','🥑 Avocado','🫘 Legumes','🍋 Lemon Water','🥦 Cruciferous Veggies'],
+        avoid: ['🚫 Alcohol (COMPLETELY)','🚫 Fried Foods','🚫 Sugary Drinks','🚫 Processed Foods','🚫 Red Meat','🚫 White Rice/Bread','🚫 Excess Salt','🚫 Trans Fats','🚫 Artificial Sweeteners'],
+        bed:'10:30 PM',wake:'6:00 AM',nap:'20 min after lunch',dur:'7-8 hours',label:'🫁 Liver Detox'
+      },
+      kidney: {
+        home: ['Gentle Walking (15 min)','Cat-Cow Stretch (10)','Child\'s Pose (1 min)','Seated Twist (30s each)','Butterfly Stretch (30s)','Deep Breathing (5 min)','Neck Rolls (30s)','Shoulder Rolls (20)','Ankle Rotations (20 each)','Seated Leg Raises (3x8)','Arm Circles (30s)','Seated Hamstring Stretch (30s each)','Corpse Pose (5 min)','Seated Side Bends (30s each)','Legs-Up-The-Wall (5 min)'],
+        gym: ['Stationary Bike (15 min)','Seated Chest Press (3x8)','Lat Pulldown (3x8)','Seated Cable Row (3x8)','Leg Press (3x10)','Shoulder Press Machine (3x8)','Hip Abductor (3x8)','Seated Leg Curl (3x8)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Plank (3x15s)','Back Extension (3x8)','Elliptical (10 min)','Seated Calf Raise (3x10)','Cable Crunch (3x8)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + apple + almond milk (low potassium if needed)'},{name:'Snack',desc:'Apple + cranberry juice (unsweetened)'},{name:'Lunch',desc:'Rice + steamed veggies + small salad + olive oil (portion-controlled)'},{name:'Snack',desc:'Cranberry + cucumber sticks'},{name:'Dinner',desc:'Grilled tofu + steamed zucchini + bell peppers + rice'}],
+        meals_nv: [{name:'Breakfast',desc:'Egg white omelette + oatmeal + apple'},{name:'Snack',desc:'Apple + cranberry juice (unsweetened)'},{name:'Lunch',desc:'Grilled chicken (small portion) + rice + steamed veggies'},{name:'Snack',desc:'Cranberry + cucumber sticks'},{name:'Dinner',desc:'Grilled fish (small) + steamed zucchini + bell peppers'}],
+        eat: ['🍎 Apples','🫐 Cranberries','🥬 Cabbage','🫑 Bell Peppers','🥒 Cucumber','🍚 White Rice (portion-controlled)','🥚 Egg Whites','🫒 Olive Oil','🍋 Lemon','🍵 Herbal Tea','🥦 Cauliflower (limited)','🍇 Grapes'],
+        avoid: ['🚫 Excess Potassium Foods (bananas, potatoes, spinach)','🚫 Excess Phosphorus (dairy, nuts, cola)','🚫 Excess Salt','🚫 Processed Foods','🚫 Red Meat','🚫 Alcohol','🚫 Sugary Drinks','🚫 Canned Foods','🚫 Pickled/Preserved Foods'],
+        bed:'10:00 PM',wake:'6:00 AM',nap:'20 min after lunch',dur:'7-8 hours',label:'🫘 Kidney Care'
+      },
+      stress: {
+        home: ['Yoga Flow (20 min)','Deep Breathing (10 min)','Cat-Cow Stretch (10)','Child\'s Pose (2 min)','Seated Twist (30s each)','Legs-Up-The-Wall (5 min)','Butterfly Stretch (30s)','Neck Rolls (30s each)','Shoulder Rolls (20)','Corpse Pose (5 min)','Standing Forward Bend (30s)','Gentle Walking (15 min)','Sun Salutation (5 cycles)','Happy Baby Pose (30s)','Supine Twist (30s each)'],
+        gym: ['Treadmill Walk (20 min)','Stationary Bike (15 min)','Seated Chest Press (3x10)','Lat Pulldown (3x10)','Seated Cable Row (3x10)','Leg Press (3x12)','Elliptical (15 min)','Shoulder Press Machine (3x8)','Hip Abductor (3x10)','Plank (3x20s)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Seated Leg Curl (3x10)','Back Extension (3x8)','Cable Crunch (3x10)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + banana + walnuts + honey'},{name:'Snack',desc:'Dark chocolate (70%+) + green tea'},{name:'Lunch',desc:'Quinoa + chickpea + avocado + leafy greens + lemon'},{name:'Snack',desc:'Chamomile tea + almonds'},{name:'Dinner',desc:'Grilled tofu + sweet potato + steamed broccoli + olive oil'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + avocado toast + berries + honey'},{name:'Snack',desc:'Dark chocolate (70%+) + green tea'},{name:'Lunch',desc:'Grilled salmon + quinoa + leafy greens + avocado'},{name:'Snack',desc:'Chamomile tea + almonds'},{name:'Dinner',desc:'Grilled chicken + sweet potato + steamed veggies'}],
+        eat: ['🐟 Fatty Fish (salmon)','🥑 Avocado','🫐 Berries','🍌 Bananas','🥜 Nuts & Seeds','🌾 Whole Grains','🍫 Dark Chocolate (70%+)','🍵 Chamomile/Green Tea','🥬 Leafy Greens','🫘 Legumes','🍊 Citrus','🥛 Warm Turmeric Milk'],
+        avoid: ['🚫 Excess Caffeine','🚫 Alcohol','🚫 Sugary Drinks','🚫 Fried Foods','🚫 Processed Carbs','🚫 Energy Drinks','🚫 Excess Sugar','🚫 Spicy Food (before bed)'],
+        bed:'9:30 PM',wake:'6:00 AM',nap:'20 min after lunch',dur:'8-9 hours',label:'🧘 Stress Relief'
+      },
+      skin_hair: {
+        home: ['Brisk Walking (20 min)','Bodyweight Squats (3x12)','Push-ups (3x10)','Glute Bridges (3x12)','Plank (3x20s)','Cat-Cow Stretch (10)','Seated Twist (30s each)','Neck Rolls (30s)','Shoulder Rolls (20)','Sun Salutation (5 cycles)','Standing Calf Raises (3x12)','Lunges (3x8 each)','Chair Dips (3x8)','Arm Circles (30s)','Deep Breathing (5 min)'],
+        gym: ['Treadmill Walk (20 min)','Seated Chest Press (3x10)','Lat Pulldown (3x10)','Seated Cable Row (3x10)','Leg Press (3x12)','Stationary Bike (15 min)','Shoulder Press Machine (3x8)','Hip Abductor (3x10)','Plank (3x20s)','Cable Bicep Curl (3x8)','Tricep Pushdown (3x8)','Seated Leg Curl (3x10)','Back Extension (3x8)','Elliptical (12 min)','Cable Crunch (3x10)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + berries + flax seeds + almonds + vitamin C fruit'},{name:'Snack',desc:'Handful of mixed nuts + green tea'},{name:'Lunch',desc:'Quinoa + chickpea + spinach + bell peppers + avocado'},{name:'Snack',desc:'Greek yogurt + berries + honey'},{name:'Dinner',desc:'Grilled tofu + broccoli + sweet potato + sesame seeds'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + avocado + whole grain toast + berries'},{name:'Snack',desc:'Mixed nuts + green tea'},{name:'Lunch',desc:'Grilled salmon + quinoa + spinach + bell peppers'},{name:'Snack',desc:'Greek yogurt + berries + honey'},{name:'Dinner',desc:'Grilled chicken + sweet potato + steamed broccoli'}],
+        eat: ['🐟 Fatty Fish (salmon)','🥚 Eggs','🥑 Avocado','🥜 Nuts & Seeds (flax, chia, sunflower)','🫐 Berries','🥬 Spinach & Leafy Greens','🍊 Citrus Fruits (vitamin C)','🥛 Greek Yogurt','🫒 Olive Oil','🍫 Dark Chocolate','🍵 Green Tea','🥕 Carrots & Bell Peppers'],
+        avoid: ['🚫 Sugary Drinks','🚫 Fried Foods','🚫 Excess Dairy','🚫 Processed Carbs','🚫 Alcohol','🚫 Excess Salt','🚫 Spicy Food (acne-prone)','🚫 Caffeine (excess)'],
+        bed:'10:30 PM',wake:'6:30 AM',nap:'20 min after lunch',dur:'8 hours',label:'✨ Skin & Hair Glow'
+      }
+    };
+
+    // ===== HOME WORKOUT =====
     var menstruationPool = ['Gentle Yoga Stretch (15 min)','Deep Breathing (5 min)','Pelvic Tilts (3x12)','Cat-Cow Stretch (10 reps)','Child\'s Pose Hold (2 min)','Light Walking (15 min)','Seated Spinal Twist (30s each)','Legs-Up-The-Wall (5 min)','Knee-to-Chest Stretch (30s each)','Supine Twist (30s each)','Happy Baby Pose (30s)','Butterfly Stretch (30s)','Neck Rolls (30s each)','Shoulder Rolls (20 reps)','Ankle Rotations (20 each)','Wrist Stretches (30s each)','Foam Rolling Lower Back (5 min)','Corpse Pose (5 min)','Standing Forward Bend (30s)','Side Bends (30s each)','Gentle Hip Circles (30s each)','Seated Forward Fold (30s)','Cobra Stretch (30s)','Sphinx Pose (30s)','Supine Hamstring Stretch (30s each)'];
     if (isMenstruating) {
       var homeEx = pick(7, menstruationPool);
       var homeEl = $('homeWorkoutList'); if (homeEl) homeEl.innerHTML = homeEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
       var gymEx = pick(7, menstruationPool);
       var gymEl = $('gymWorkoutList'); if (gymEl) gymEl.innerHTML = gymEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
+    } else if (problem !== 'general' && problemData[problem]) {
+      var pd = problemData[problem];
+      var pHome = pick(7, pd.home);
+      var homeEl = $('homeWorkoutList'); if (homeEl) homeEl.innerHTML = pHome.map(function(e) { return '<li>' + e + '</li>'; }).join('');
+      var pGym = pick(7, pd.gym);
+      var gymEl = $('gymWorkoutList'); if (gymEl) gymEl.innerHTML = pGym.map(function(e) { return '<li>' + e + '</li>'; }).join('');
     } else {
       var homePools = {
         seniorYoung: ['Brisk Walking (20 min)','Bodyweight Squats (3x10)','Wall Push-ups (3x10)','Seated Leg Raises (3x12)','Standing Calf Raises (3x15)','Cat-Cow Stretch (10 reps)','Arm Circles (30s each)','Chair Dips (3x10)','Marching in Place (3x30s)','Knee Push-ups (3x8)','Bird Dog (3x8 each)','Heel Raises (3x15)','Side Leg Raises (3x10 each)','Seated Twist (10 each)','Toe Touches (3x10)'],
@@ -313,8 +460,8 @@
       var homeEl = $('homeWorkoutList'); if (homeEl) homeEl.innerHTML = homeEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
     }
 
-    // --- GYM WORKOUT (personalized + randomized each time) ---
-    if (!isMenstruating) {
+    // --- GYM WORKOUT ---
+    if (!isMenstruating && !(problem !== 'general' && problemData[problem])) {
       var gymPools = {
         senior: ['Treadmill Walk (20 min)','Seated Chest Press (3x10)','Leg Press Machine (3x12)','Lat Pulldown (3x10)','Seated Row (3x10)','Hip Abductor Machine (3x12)','Stationary Bike (15 min)','Cable Bicep Curl (3x10)','Tricep Pushdown (3x10)','Shoulder Press Machine (3x10)','Chest Fly Machine (3x10)','Leg Curl Machine (3x12)','Elliptical (15 min)','Seated Calf Raise (3x15)','Back Extension (3x10)'],
         young: ['Bodyweight Squats (3x12)','Dumbbell Bench Press (3x10)','Lat Pulldown (3x10)','Leg Press (3x12)','Plank (3x25s)','Cycling (15 min)','Light Deadlifts (3x8)','Dumbbell Row (3x10 each)','Cable Crossovers (3x10)','Leg Extension (3x12)','Hammer Curls (3x10)','Overhead Tricep (3x10)','Face Pulls (3x12)','Kettlebell Swings (3x12)','Farmers Walk (30s)'],
@@ -325,18 +472,18 @@
         underweightFemale: ['Goblet Squats (4x10)','Dumbbell Bench Press (4x10)','Seated Cable Row (4x10)','Leg Press (4x12)','Dumbbell RDL (3x12)','Lat Pulldown (3x10)','Glute Kickbacks (3x12)','Hip Thrusts (4x12)','Standing Calf Raises (3x15)','Cable Crossovers (3x10)','Dumbbell Lunges (3x10 each)','Plank (3x25s)','Step-ups (3x10 each)','Bicep Curls (3x10)','Lateral Raises (3x10)'],
         normal: ['Dumbbell Press (3x12)','Lat Pulldown (3x12)','Leg Press (3x15)','Dumbbell Row (3x12)','Plank (3x30s)','Cycling (20 min)','Cable Crossovers (3x12)','Tricep Pushdown (3x12)','Hammer Curls (3x12)','Face Pulls (3x15)','Walking Lunges (3x12 each)','Leg Curl (3x15)','Shoulder Press (3x10)','Cable Crunch (3x15)','Hip Thrusts (3x15)']
       };
-    var gymPool;
-    if (isSenior) gymPool = gymPools.senior;
-    else if (isYoung) gymPool = gymPools.young;
-    else if (isOverweightBMI) gymPool = gymPools.overweight;
-    else if (isActive && isAdult) gymPool = isMale ? gymPools.activeMale : gymPools.activeFemale;
-    else if (isUnderweight) gymPool = isMale ? gymPools.underweightMale : gymPools.underweightFemale;
-    else gymPool = gymPools.normal;
+      var gymPool;
+      if (isSenior) gymPool = gymPools.senior;
+      else if (isYoung) gymPool = gymPools.young;
+      else if (isOverweightBMI) gymPool = gymPools.overweight;
+      else if (isActive && isAdult) gymPool = isMale ? gymPools.activeMale : gymPools.activeFemale;
+      else if (isUnderweight) gymPool = isMale ? gymPools.underweightMale : gymPools.underweightFemale;
+      else gymPool = gymPools.normal;
       var gymEx = pick(7, gymPool);
       var gymEl = $('gymWorkoutList'); if (gymEl) gymEl.innerHTML = gymEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
     }
 
-    // --- MEAL PLAN (personalized by age, gender, weight, activity, AND diet) ---
+    // --- MEAL PLAN ---
     var isVeg = diet === 'veg';
     var dietBadge = $('dietBadge');
     if (dietBadge) {
@@ -345,6 +492,11 @@
         dietBadge.style.background = 'rgba(139,108,247,0.12)';
         dietBadge.style.color = '#b794f7';
         dietBadge.style.borderColor = 'rgba(139,108,247,0.3)';
+      } else if (problem !== 'general' && problemData[problem]) {
+        dietBadge.textContent = problemData[problem].label;
+        dietBadge.style.background = 'rgba(0,232,135,0.08)';
+        dietBadge.style.color = 'var(--green)';
+        dietBadge.style.borderColor = 'rgba(0,232,135,0.3)';
       } else {
         dietBadge.textContent = isVeg ? '🌱 Vegetarian' : '🥟 Non-Vegetarian';
         dietBadge.style.background = isVeg ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)';
@@ -361,6 +513,8 @@
         { name: 'Evening Snack', desc: 'Warm turmeric milk + dates + walnuts' },
         { name: 'Dinner', desc: isVeg ? 'Steamed veggies + brown rice + tofu + sesame seeds' : 'Chicken soup + steamed veggies + brown rice' }
       ];
+    } else if (problem !== 'general' && problemData[problem]) {
+      meals = isVeg ? problemData[problem].meals_v : problemData[problem].meals_nv;
     } else if (isYoung || isUnderweight) {
       meals = isVeg ? [
         { name: 'Breakfast', desc: 'Oatmeal + banana + peanut butter + soy milk' },
@@ -448,10 +602,12 @@
       return '<div class="meal-item"><div class="meal-name">' + m.name + '</div><div class="meal-desc">' + m.desc + '</div></div>';
     }).join('');
 
-    // --- FOODS TO EAT (personalized + STRICT veg/non-veg split) ---
+    // --- FOODS TO EAT ---
     var eat, eatLabel = $('foodsEatLabel');
     if (isMenstruating) {
       eat = ['🥬 Spinach & Leafy Greens', '🥚 Eggs', '🐟 Fatty Fish (salmon/sardines)', '🍫 Dark Chocolate (70%+)', '🍌 Bananas', '🥜 Pumpkin Seeds & Almonds', '🫘 Lentils & Beans', '🫐 Berries', '🧀 Tofu', '🌾 Whole Grains', '🥛 Warm Turmeric Milk', '🍵 Ginger Tea'];
+    } else if (problem !== 'general' && problemData[problem]) {
+      eat = problemData[problem].eat;
     } else if (isVeg) {
       if (isUnderweight) {
         eat = ['🥚 Eggs', '🧀 Paneer', '🥜 Nuts & Butters', '🥑 Avocado', '🍌 Bananas', '🌾 Whole Grains', '🥛 Full-Fat Dairy', '🍇 Dried Fruits'];
@@ -477,10 +633,14 @@
         eat = ['🥚 Eggs', '🍗 Chicken Breast', '🐟 Fish', '🍌 Bananas', '🌾 Oats', '🍚 Brown Rice', '🍠 Sweet Potato', '🥬 Spinach', '🥜 Mixed Nuts'];
       }
     }
-    if (eatLabel) eatLabel.textContent = isMenstruating ? '🌸 Iron-Rich & Soothing Foods' : isVeg ? '🌱 Vegetarian Options' : '🥩 Non-Vegetarian Options';
+    if (eatLabel) eatLabel.textContent = isMenstruating ? '🌸 Iron-Rich & Soothing Foods' : (problem !== 'general' && problemData[problem]) ? '🎯 Targeted Nutrition' : isVeg ? '🌱 Vegetarian Options' : '🥩 Non-Vegetarian Options';
+
+    // --- FOODS TO AVOID ---
     var avoid;
     if (isMenstruating) {
       avoid = ['🚫 Excess Caffeine', '🚫 Sugary Drinks', '🚫 Fried/Oily Foods', '🚫 Spicy Food', '🚫 Alcohol', '🚫 Cold Drinks/Ice Cream', '🚫 Excess Salt (causes bloating)', '🚫 Dairy (if sensitive)'];
+    } else if (problem !== 'general' && problemData[problem]) {
+      avoid = problemData[problem].avoid;
     } else if (isVeg) {
       if (isUnderweight) {
         avoid = ['🚫 Junk Food', '🚫 Sugary Drinks', '🚫 Excess Caffeine', '🚫 Raw Salad (fill up on calories first)', '🚫 Artificial Sweeteners'];
@@ -509,28 +669,34 @@
     var eatEl = $('foodsEat'); if (eatEl) eatEl.innerHTML = eat.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
     var avEl = $('foodsAvoid'); if (avEl) avEl.innerHTML = avoid.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
 
-    // --- SLEEP SCHEDULE (personalized by age & activity) ---
-    var bedHour, bedMin, wakeHour, wakeMin, bedLabel, wakeLabel, napLabel;
-    if (isActive && !isMenstruating) {
-      bedHour = 21; bedMin = 30; wakeHour = 5; wakeMin = 30;
-      bedLabel = '9:30 PM'; wakeLabel = '5:30 AM'; napLabel = '20 min after 1 PM';
-    } else if (isSenior || isMenstruating) {
-      bedHour = 21; bedMin = 0; wakeHour = 5; wakeMin = 0;
-      bedLabel = '9:00 PM'; wakeLabel = '5:00 AM'; napLabel = isMenstruating ? '30-45 min after 12 PM' : '30 min after 12 PM';
+    // --- SLEEP SCHEDULE (personalized) ---
+    var bedHour, bedMin, wakeHour, wakeMin, bedLabel, wakeLabel, napLabel, durLabel;
+    if (isMenstruating) {
+      bedHour = 21; bedMin = 0; wakeHour = 5; wakeMin = 0; bedLabel = '9:00 PM'; wakeLabel = '5:00 AM'; napLabel = '30-45 min after 12 PM'; durLabel = '8-9 hours';
+    } else if (problem !== 'general' && problemData[problem]) {
+      var ps = problemData[problem];
+      var parts = ps.bed.split(':');
+      bedHour = parseInt(parts[0]); bedMin = parseInt(parts[1]) || 0;
+      var wparts = ps.wake.split(':');
+      wakeHour = parseInt(wparts[0]); wakeMin = parseInt(wparts[1]) || 0;
+      bedLabel = ps.bed.indexOf('PM') !== -1 || ps.bed.indexOf('AM') !== -1 ? ps.bed : ps.bed;
+      wakeLabel = ps.wake.indexOf('PM') !== -1 || ps.wake.indexOf('AM') !== -1 ? ps.wake : ps.wake;
+      napLabel = ps.nap; durLabel = ps.dur;
+    } else if (isActive) {
+      bedHour = 21; bedMin = 30; wakeHour = 5; wakeMin = 30; bedLabel = '9:30 PM'; wakeLabel = '5:30 AM'; napLabel = '20 min after 1 PM'; durLabel = '8 hours';
+    } else if (isSenior) {
+      bedHour = 21; bedMin = 0; wakeHour = 5; wakeMin = 0; bedLabel = '9:00 PM'; wakeLabel = '5:00 AM'; napLabel = '30 min after 12 PM'; durLabel = '8 hours';
     } else if (isYoung) {
-      bedHour = 21; bedMin = 30; wakeHour = 6; wakeMin = 30;
-      bedLabel = '9:30 PM'; wakeLabel = '6:30 AM'; napLabel = 'Not needed';
+      bedHour = 21; bedMin = 30; wakeHour = 6; wakeMin = 30; bedLabel = '9:30 PM'; wakeLabel = '6:30 AM'; napLabel = 'Not needed'; durLabel = '8 hours';
     } else if (isOverweightBMI) {
-      bedHour = 22; bedMin = 0; wakeHour = 6; wakeMin = 0;
-      bedLabel = '10:00 PM'; wakeLabel = '6:00 AM'; napLabel = '20 min after 2 PM';
+      bedHour = 22; bedMin = 0; wakeHour = 6; wakeMin = 0; bedLabel = '10:00 PM'; wakeLabel = '6:00 AM'; napLabel = '20 min after 2 PM'; durLabel = '8 hours';
     } else {
-      bedHour = 22; bedMin = 30; wakeHour = 6; wakeMin = 30;
-      bedLabel = '10:30 PM'; wakeLabel = '6:30 AM'; napLabel = '20 min after 2 PM';
+      bedHour = 22; bedMin = 30; wakeHour = 6; wakeMin = 30; bedLabel = '10:30 PM'; wakeLabel = '6:30 AM'; napLabel = '20 min after 2 PM'; durLabel = '8 hours';
     }
     var sleep = [
       { label: 'Bedtime', time: bedLabel },
       { label: 'Wake Up', time: wakeLabel },
-      { label: 'Duration', time: isMenstruating ? '8-9 hours' : '8 hours' },
+      { label: 'Duration', time: durLabel },
       { label: 'Nap (optional)', time: napLabel }
     ];
     var sleepEl = $('sleepSchedule'); if (sleepEl) sleepEl.innerHTML = sleep.map(function(s) {
@@ -597,7 +763,7 @@
     function getUserContextStr() {
       var p = getUserProfile();
       if (!p) return '';
-      var ctx = 'Based on your profile (Age: ' + p.age + ', BMI: ' + p.bmi.toFixed(1) + ', Activity: ' + p.activity + ', Gender: ' + p.gender;
+      var ctx = 'Based on your profile (Age: ' + p.age + ', BMI: ' + p.bmi.toFixed(1) + ', Activity: ' + p.activity + ', Gender: ' + p.gender + ', Focus: ' + (p.problem || 'general');
       if (p.menstruation) ctx += ', Currently menstruating';
       ctx += '): ';
       return ctx;
@@ -906,7 +1072,58 @@
             return '🌸 MENSTRUATION PHASE — ACTIVE:\n\nSince you\'ve indicated you\'re currently menstruating, your plan has been adjusted with gentle exercises:\n\nRECOMMENDED EXERCISES:\n- Light Yoga (Child\'s Pose, Cat-Cow, Happy Baby)\n- Walking (15-20 min)\n- Gentle stretching\n- Deep breathing / meditation\n- Foam rolling (avoid lower back if tender)\n\nFOODS THAT HELP:\n- Iron-rich: Spinach, lentils, red meat\n- Vitamin C: Citrus, berries (helps iron absorption)\n- Omega-3: Salmon, walnuts, flax (reduces cramp intensity)\n- Magnesium: Dark chocolate, nuts, seeds\n- Warm fluids: Ginger tea, turmeric milk\n\nFOODS TO AVOID: Caffeine, excess salt, fried foods, alcohol\n\nSLEEP: Aim for 8-9 hours — your body needs extra recovery!\n\nHeavy lifting and high-intensity can wait — listen to your body.';
           }
           return '🌸 MENSTRUATION & EXERCISE GUIDE:\n\nYES, you can exercise during your period — and it can actually help!\n\nBEST EXERCISES DURING MENSTRUATION:\n- Walking/light cardio\n- Yoga & Pilates\n- Light stretching\n- Bodyweight strength (moderate)\n- Swimming\n\nBENEFITS: Reduced cramps, improved mood, better sleep, less fatigue\n\nFOODS TO EAT: Iron-rich foods (spinach, lentils, red meat), dark chocolate, ginger tea, warm foods\n\nFOODS TO AVOID: Caffeine (increases cramps), salty foods (bloating), fried foods\n\nGENERAL ADVICE: Days 1-2 go easy, days 3-5 you can gradually increase intensity. Listen to your body — it\'s NOT weak to take it easy during your period.';
-        }, qr: ['Light exercises','Best foods','Cramp relief','When to rest'] }
+        }, qr: ['Light exercises','Best foods','Cramp relief','When to rest'] },
+
+        // --- CONDITION-SPECIFIC HEALTH ADVICE ---
+        diabetes_chat: { kw: ['diabetes','diabetic','blood sugar','glucose','insulin','sugar level','type 1 diabetes','type 2 diabetes','sugar patient','high sugar','low sugar','diabetes diet','diabetes exercise'], resp: function(){
+          if (p && p.problem === 'diabetes') return pCtx+'🩸 DIABETES MANAGEMENT (ACTIVE PROFILE):\n\nSince you selected Diabetes as your health focus, your plan includes:\n\nEXERCISE: Low-moderate intensity (walking, cycling, light resistance) — 30-45 min daily\nAvoid high-intensity if blood sugar is uncontrolled\n\nDIET TIPS:\n- Low GI carbs: Oats, quinoa, sweet potato (small portions)\n- Protein with every meal (stabilizes glucose)\n- Fiber first (veggies before carbs reduces spikes)\n- Cinnamon & fenugreek help insulin sensitivity\n- NO skipped meals — causes rebound highs/lows\n\nMONITOR: Always check before/after exercise\n\nWARNING: If on insulin, consult doctor before starting new exercise.';
+          return '🩸 DIABETES CARE GUIDE:\n\nEXERCISE RECOMMENDATIONS:\n- Walking: 30 min daily (lowers blood sugar by 15-20%)\n- Resistance training: 2-3x/week (improves insulin sensitivity for 24-48h)\n- Yoga: Reduces cortisol, improves glucose control\n\nDIET: Low glycemic index foods, high fiber, protein with every meal\n\nFOODS TO EAT: Oats, quinoa, leafy greens, berries, nuts, lean protein, cinnamon\nFOODS TO AVOID: White rice, sugar, fruit juices, fried foods, sweetened beverages\n\nAlways consult your doctor before starting a new exercise regimen. Check your blood sugar before and after exercise.';
+        }, qr: ['Diabetes diet','Best exercises','Blood sugar tips','Meal plan'] },
+
+        pcod_chat: { kw: ['pcod','pcos','pcod exercise','pcos diet','hormonal imbalance','pcod problem','ovary','cyst','hormone','polycystic'], resp: function(){
+          if (p && p.problem === 'pcod') return pCtx+'🌸 PCOD/PCOS MANAGEMENT (ACTIVE PROFILE):\n\nYour personalized plan focuses on:\n\nEXERCISE: Mix of cardio + strength (30 min, 5x/week)\nWalking, light jogging, squats, yoga — helps insulin sensitivity\n\nDIET:\n- Low GI carbs to manage insulin spikes\n- Anti-inflammatory foods: turmeric, berries, leafy greens\n- Healthy fats: avocado, nuts, seeds (supports hormone balance)\n- Reduce dairy & soy (can affect hormones)\n\nLIFESTYLE: Sleep 8h, stress management via yoga/meditation\n\nPCOS is manageable — consistency is key!';
+          return '🌸 PCOD/PCOS — COMPREHENSIVE GUIDE:\n\nWHAT IS PCOS? Hormonal disorder causing irregular periods, excess androgen, and ovarian cysts. Affects 1 in 10 women.\n\nEXERCISE: 150 min/week moderate cardio + 2x/week strength training\nBest: Walking, swimming, yoga (reduces cortisol)\n\nDIET:\n✔️ Low GI carbs, anti-inflammatory foods, healthy fats\n❌ Sugar, processed foods, excess dairy/soy\n\nSUPPLEMENTS: Inositol, Vitamin D, Omega-3, Magnesium (consult doctor)\n\nWEIGHT LOSS: Even 5% reduction improves symptoms significantly.';
+        }, qr: ['PCOD diet','Best exercises','Supplements','Hormone balance'] },
+
+        thyroid_chat: { kw: ['thyroid','hypothyroid','hyperthyroid','thyroid problem','thyroid diet','thyroid exercise','underactive thyroid','overactive thyroid','hashimoto','goiter','tsh','t3','t4'], resp: function(){
+          if (p && p.problem === 'thyroid') return pCtx+'🦋 THYROID MANAGEMENT (ACTIVE PROFILE):\n\nYour personalized plan:\n\nEXERCISE: Moderate intensity (walking, light weights, yoga)\nAvoid over-training — it stresses the thyroid further\n\nDIET:\n- Brazil nuts (2/day) for selenium\n- Iodine from natural sources (seaweed, fish)\n- Limit raw cruciferous veggies (cook them)\n- Protein with every meal (supports thyroid function)\n\nLIFESTYLE: Sleep 8h, stress management CRITICAL\nCortisol directly suppresses thyroid function.\n\n⚠️ Take thyroid meds on empty stomach, wait 30-60min before eating.';
+          return '🦋 THYROID HEALTH GUIDE:\n\nHYPOTHYROIDISM (Underactive): Fatigue, weight gain, cold sensitivity, hair loss\nHYPERTHYROIDISM (Overactive): Weight loss, anxiety, heat sensitivity, rapid heartbeat\n\nEXERCISE:\n- Hypo: Moderate cardio + strength (boost metabolism)\n- Hyper: Gentle exercise (walking, yoga) — avoid high-intensity\n\nDIET:\n- Selenium: Brazil nuts (2/day), tuna, eggs\n- Iodine: Seaweed, fish, dairy (don\'t over-supplement)\n- Limit: Raw cruciferous veggies (goitrogens), soy\n\nAlways take thyroid medication as prescribed and get regular blood work.';
+        }, qr: ['Hypothyroid diet','Best exercises','Thyroid supplements','Symptoms'] },
+
+        highbp_chat: { kw: ['high bp','high blood pressure','hypertension','blood pressure','bp','bp control','high bp diet','hypertension exercise','blood pressure control'], resp: function(){
+          if (p && p.problem === 'high_bp') return pCtx+'❤️ BLOOD PRESSURE MANAGEMENT (ACTIVE PROFILE):\n\nYour personalized plan:\n\nEXERCISE: Moderate aerobic (walking, cycling) 30-45 min daily\nAvoid heavy lifting (valsalva maneuver spikes BP)\n\nDIET: DASH diet principles\n- LOW SODIUM (<1500mg/day)\n- High potassium: bananas, sweet potatoes, spinach\n- Limit caffeine to 1-2 cups\n\nLIFESTYLE: Stress reduction CRITICAL\nDeep breathing 5 min/day can lower BP by 5-10 mmHg\n\n⚠️ Avoid skipping meds. Monitor BP at home.';
+          return '❤️ HIGH BLOOD PRESSURE GUIDE:\n\nWHAT IS HYPERTENSION? BP consistently >130/80 mmHg. \"Silent killer\" — often no symptoms.\n\nTHE DASH DIET:\n✔️ Fruits, veggies, whole grains, lean protein, low-fat dairy\n❌ Salt (<1 tsp/day), processed foods, red meat, alcohol\n\nEXERCISE: 150 min/week moderate aerobic\nBest: Walking, swimming, cycling\nAvoid: Heavy weightlifting (straining)\n\nLIFESTYLE: Limit alcohol, quit smoking, manage stress, sleep 7-8h\n\n⚠️ Lifestyle changes can reduce BP by 10-20 mmHg.';
+        }, qr: ['DASH diet','Best exercises','Salt reduction tips','Monitor BP'] },
+
+        cholesterol_chat: { kw: ['cholesterol','high cholesterol','ldl','hdl','triglycerides','lipid profile','bad cholesterol','good cholesterol','cholesterol diet','cholesterol exercise','heart disease','lipid'], resp: function(){
+          if (p && p.problem === 'cholesterol') return pCtx+'💚 CHOLESTEROL MANAGEMENT (ACTIVE PROFILE):\n\nYour personalized plan:\n\nEXERCISE: 30-45 min cardio (walking, jogging, cycling) 5x/week\nIncreases HDL (good cholesterol)\n\nDIET:\n- Soluble fiber: Oats, barley, apples, flax seeds (LOWERS LDL)\n- Omega-3s: Salmon, walnuts, chia seeds\n- Plant stanols/sterols (fortified foods)\n- Limit saturated fats (butter, fatty meat)\n\nLIFESTYLE: Weight loss (even 5-10% helps), avoid smoking\n\nTotal cholesterol should be <200 mg/dL. LDL <100, HDL >40 (men)/>50 (women).';
+          return '💚 CHOLESTEROL — COMPLETE GUIDE:\n\nTYPES:\n- LDL (Bad): Deposits in arteries — target <100 mg/dL\n- HDL (Good): Removes cholesterol — target >40-50 mg/dL\n- Triglycerides: Target <150 mg/dL\n\nDIET TO LOWER CHOLESTEROL:\n✔️ Oats, barley, nuts, salmon, avocado, olive oil, leafy greens\n❌ Trans fats, fried foods, red meat, butter, processed meats, sugar\n\nEXERCISE: 30-40 min moderate cardio 5x/week (raises HDL by 5-10%)\n\nPortfolio Diet: Combining oats, nuts, soy, plant sterols, and viscous fiber = 30% LDL reduction (comparable to statins!)';
+        }, qr: ['Lower LDL naturally','Raise HDL','Best foods','Sample meal plan'] },
+
+        joint_chat: { kw: ['joint pain','arthritis','knee pain','joint','rheumatoid','osteoarthritis','gout','joint inflammation','joint health','cartilage','swelling joint'] , resp: function(){
+          if (p && p.problem === 'joint_pain') return pCtx+'🦴 JOINT HEALTH (ACTIVE PROFILE):\n\nYour personalized plan:\n\nEXERCISE: Low-impact only\n✔️ Swimming, cycling, walking, gentle yoga\n❌ Running, jumping, heavy squats, high-impact cardio\n\nDIET: Anti-inflammatory\n- Omega-3s: Salmon, sardines, walnuts (reduces inflammation)\n- Turmeric + black pepper (curcumin reduces joint pain)\n- Vitamin C: Citrus, berries (collagen production)\n- Ginger: Natural anti-inflammatory\n\nLIFESTYLE: Maintain healthy weight (1kg loss = 4kg pressure off knees)\n\nICE after activity if swollen. HEAT for stiffness.';
+          return '🦴 JOINT PAIN & ARTHRITIS GUIDE:\n\nTYPES:\n- Osteoarthritis: Wear-and-tear (age-related)\n- Rheumatoid: Autoimmune inflammation\n- Gout: Uric acid crystals\n\nBEST EXERCISES: Swimming, cycling, walking, tai chi, gentle yoga\nAVOID: Running, jumping, deep squats, high-impact sports\n\nDIET: Anti-inflammatory foods\n✔️ Salmon, walnuts, turmeric, berries, olive oil, ginger\n❌ Sugar, fried foods, processed carbs, red meat, alcohol\n\nSUPPLEMENTS: Glucosamine (moderate evidence), Omega-3 (strong), Vitamin D\n\nWeight management = #1 most effective lifestyle intervention.';
+        }, qr: ['Anti-inflammatory diet','Low-impact exercises','Supplements','Pain relief tips'] },
+
+        anemia_chat: { kw: ['anemia','low iron','iron deficiency','anemic','hemoglobin','low hemoglobin','iron rich','iron supplement','paleness','fatigue iron','blood loss','iron levels'], resp: function(){
+          if (p && p.problem === 'anemia') return pCtx+'🩸 ANEMIA MANAGEMENT (ACTIVE PROFILE):\n\nYour personalized plan focuses on iron restoration:\n\nEXERCISE: Gentle to moderate (walking, light strength)\nAvoid high-intensity until iron levels normalize\n\nDIET:\n- Iron-rich: Red meat, spinach, lentils, pumpkin seeds\n- Vitamin C PAIRING: Add lemon/orange to iron meals (3x absorption!)\n- AVOID: Tea/coffee 1h before/after iron meals (blocks absorption)\n\nLIFESTYLE: Prioritize sleep (8-9h), reduce stress\n\n⚠️ Iron supplements: Take with vitamin C, on empty stomach.\nConstipation is common — increase fiber and water.\n\nTarget hemoglobin: 12-15 g/dL (women), 13-17 g/dL (men).';
+          return '🩸 ANEMIA — COMPLETE GUIDE:\n\nWHAT IS ANEMIA? Low red blood cells or hemoglobin. Most common = iron deficiency.\n\nSYMPTOMS: Fatigue, pale skin, shortness of breath, dizziness, cold hands/feet, brittle nails\n\nIRON-RICH FOODS:\nHeme (best absorbed): Red meat, liver, chicken, fish\nNon-heme: Spinach, lentils, tofu, pumpkin seeds, fortified cereals\n\nBOOST ABSORPTION: Pair with Vitamin C (orange, lemon, bell peppers)\nBLOCK ABSORPTION: Tea, coffee, calcium (wait 1-2h)\n\nSUPPLEMENTS: Ferrous sulfate 65mg elemental iron/day (consult doctor)\n\nIt takes 2-4 months to correct deficiency — be patient and consistent!';
+        }, qr: ['Iron-rich foods','Best supplements','Absorption tips','Symptoms'] },
+
+        digestive_chat: { kw: ['digestion','acidity','gas','bloating','indigestion','gut health','stomach','constipation','diarrhea','ibs','irritable bowel','acid reflux','heartburn','ulcer','probiotic','gut'], resp: function(){
+          if (p && p.problem === 'digestive') return pCtx+'🌿 DIGESTIVE HEALTH (ACTIVE PROFILE):\n\nYour personalized plan focuses on gut healing:\n\nEXERCISE: Gentle movement (walking, yoga twists, breathing)\nAvoid intense core work during flare-ups\n\nDIET:\n- Easy-to-digest: Khichdi, rice, cooked veggies, banana\n- Probiotics: Yogurt, buttermilk (if tolerated)\n- Ginger, cumin, fennel for digestion\n- Eat smaller meals, chew thoroughly\n- AVOID: Spicy, fried, raw salads, carbonated drinks\n\nLIFESTYLE: Eat 2-3h before bed, no water 30min before/after meals\nStress reduces digestive enzymes — manage stress!';
+          return '🌿 DIGESTIVE HEALTH GUIDE:\n\nCOMMON ISSUES:\nAcidity: Excess stomach acid (heartburn, reflux)\nGas/Bloating: Poor digestion, food intolerances\nConstipation: Low fiber, dehydration\nIBS: Stress-triggered gut sensitivity\n\nDIET PRINCIPLES:\n✔️ Cooked veggies, gentle grains (rice, oats), probiotic foods, ginger, fennel\n❌ Spicy, fried, raw, dairy (if sensitive), caffeine, alcohol, carbonated drinks\n\nLIFESTYLE: Eat slowly, no screens while eating, walk after meals\n\nFIBER: 25-30g/day (soluble: oats, banana; insoluble: veggies)\n\n⚠️ Persistent issues? See a gastroenterologist.';
+        }, qr: ['Acidity relief','Gut healing foods','Probiotic guide','IBS management'] },
+
+        stress_chat: { kw: ['stress','anxiety','mental health','depression','mood','mental wellness','overthinking','relaxation','calm','meditation','mindfulness','mental peace','tension','panic'], resp: function(){
+          if (p && p.problem === 'stress') return pCtx+'🧘 STRESS MANAGEMENT (ACTIVE PROFILE):\n\nYour personalized plan focuses on nervous system regulation:\n\nEXERCISE: Yoga, walking, gentle movement — NO intense cardio (raises cortisol)\nMorning sunlight exposure (regulates circadian rhythm)\n\nDIET:\n- Magnesium-rich: Dark chocolate, nuts, seeds, bananas\n- Omega-3s: Salmon, walnuts (lowers stress hormones)\n- Adaptogens: Chamomile tea, ashwagandha, tulsi\n- AVOID: Caffeine (excess), alcohol, sugar spikes\n\nLIFESTYLE:\n- 10 min meditation daily (lowers cortisol by 20%)\n- 7-9h sleep (non-negotiable)\n- Digital detox 1h before bed\n- Deep breathing: 4-7-8 technique (instant calm)';
+          return '🧘 STRESS & ANXIETY — SCIENCE-BASED GUIDE:\n\nPHYSIOLOGY: Stress triggers cortisol & adrenaline. Chronic stress = elevated cortisol = weight gain, poor sleep, weakened immunity, brain fog.\n\nPROVEN STRESS REDUCERS:\n1. Meditation: 10 min/day (reduces amygdala size)\n2. Exercise: Moderate walking/yoga (NOT intense)\n3. Nature: 20 min outdoors (lower cortisol by 21%)\n4. Social Connection: Reduces stress hormones\n5. Sleep: 7-9h (critical for emotional regulation)\n\nFOODS: Dark chocolate, fatty fish, nuts, berries, green tea\n\nAVOID: Excess caffeine, alcohol, sugar, processed foods\n\n4-7-8 BREATHING: Inhale 4s, hold 7s, exhale 8s. Repeat 5 times.';
+        }, qr: ['Meditation guide','Calming foods','Sleep tips','Breathing exercises'] },
+
+        weightloss_chat: { kw: ['weight loss','fat loss','lose weight','slim','get lean','cutting','weight loss diet','weight loss exercise','belly fat','obesity','overweight','fat burning','calorie deficit'], resp: function(){
+          if (p && p.problem === 'weight_loss') return pCtx+'🔥 WEIGHT LOSS MODE (ACTIVE PROFILE):\n\nYour personalized plan:\n\nCALORIE TARGET: '+(p ? p.tdee-500 : 2000)+'-'+(p ? p.tdee-300 : 2200)+' cal\n\nEXERCISE:\n- Cardio: 30-45 min, 5x/week (walking, jogging, cycling)\n- HIIT: 2x/week (maximizes EPOC/afterburn)\n- Strength: 3x/week (preserves muscle during deficit)\n\nDIET:\n- High protein (30% of calories)\n- High fiber (25-35g/day)\n- Low processed carbs, no liquid calories\n- Green tea + lemon before meals\n\nLIFESTYLE: 8h sleep, stress management, 10k steps/day\n\nTarget: 0.5-1kg/week. Sustainable = 80% diet, 20% exercise.';
+          return '🔥 WEIGHT LOSS — EVIDENCE-BASED:\n\nCALORIE DEFICIT: Eat 300-500 below maintenance\nPROTEIN: 1.6-2.4g/kg (preserves muscle, increases satiety)\nFIBER: 25-35g/day (reduces calorie absorption)\n\nEXERCISE: 150-300 min moderate OR 75-150 min vigorous/week\n\nBEST FOODS: Lean protein, veggies, fruits, whole grains, nuts\nAVOID: Sugary drinks, fried foods, refined carbs, alcohol\n\nSLEEP: 7-9h — poor sleep increases hunger hormone ghrelin by 28%\n\nHealthy rate: 0.5-1kg per week. Faster = muscle loss + rebound.';
+        }, qr: ['My calorie needs','Best exercises','Meal plan','Motivation'] }
       };
 
       // --- Match input against knowledge base ---
@@ -1120,6 +1337,7 @@
       'Height: ' + p.height + ' cm\n' +
       'Weight: ' + p.weight + ' kg\n' +
       'Gender: ' + p.gender + (p.menstruation ? ' (Menstruating)' : '') + '\n' +
+      'Health Focus: ' + (p.problem || 'General Fitness') + '\n' +
       'Activity: ' + p.activity + '\n' +
       'BMI: ' + p.bmi.toFixed(1) + '\n' +
       'Daily Calories: ' + p.tdee + '\n' +
@@ -1160,6 +1378,7 @@
       age: saved.age, height: saved.height, weight: saved.weight,
       gender: saved.gender, activity: saved.activity, diet: saved.diet,
       menstruation: saved.menstruation || false,
+      problem: saved.problem || 'general',
       bmi: saved.bmi, tdee: saved.tdee
     };
     if (saved.gender === 'female') {
