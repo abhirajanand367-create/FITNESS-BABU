@@ -263,6 +263,47 @@
     dashboardSec.scrollIntoView({ behavior: 'smooth' });
     unlockBadge('fitpro');
     safeSet('fithomey_profile', JSON.stringify({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, problem: d.problem, bmi: bmi, tdee: tdee, water: water, score: score, riskLevel: riskLevel }));
+    renderChart({ bmi: bmi, tdee: tdee, water: water, score: score, age: d.age });
+  }
+
+  // ===== BAR CHART =====
+  function renderChart(m) {
+    var container = $('chartContainer');
+    if (!container) return;
+    var age = m.age || 30;
+    var sleep = age < 18 ? 9 : age <= 35 ? 8 : age <= 50 ? 7.5 : 7;
+    var data = [
+      { label: 'BMI', value: Math.round(m.bmi*10)/10, max: 40, unit: '', c1: '#00e887', c2: '#00a865' },
+      { label: 'Calories', value: m.tdee, max: 3500, unit: '', c1: '#f0b429', c2: '#d97706' },
+      { label: 'Water', value: m.water, max: 5, unit: 'L', c1: '#00b8ff', c2: '#0077b6' },
+      { label: 'Fitness', value: m.score, max: 100, unit: '', c1: '#7c5cfc', c2: '#5b21b6' },
+      { label: 'Sleep', value: sleep, max: 10, unit: 'h', c1: '#6366f1', c2: '#4338ca' }
+    ];
+    var w = 500, h = 250, barW = 56, gap = 22;
+    var cw = data.length * barW + (data.length - 1) * gap;
+    var sx = (w - cw) / 2, base = 205, bh = 170;
+    var svg = '<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg"><defs>';
+    data.forEach(function(d,i){
+      svg += '<linearGradient id="bg'+i+'" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="'+d.c2+'"/><stop offset="100%" stop-color="'+d.c1+'"/></linearGradient>';
+    });
+    svg += '</defs>';
+    svg += '<rect width="'+w+'" height="'+h+'" fill="transparent"/>';
+    [0.25,0.5,0.75,1].forEach(function(p){
+      var y = base - bh * p;
+      svg += '<line x1="'+(sx-8)+'" y1="'+y+'" x2="'+(sx+cw+8)+'" y2="'+y+'" stroke="#2a3040" stroke-width="1" stroke-dasharray="3,3"/>';
+      svg += '<text x="'+(sx-14)+'" y="'+(y+4)+'" fill="#4a5060" font-size="8" text-anchor="end">'+Math.round(p*100)+'%</text>';
+    });
+    data.forEach(function(d,i){
+      var x = sx + i * (barW + gap);
+      var hp = Math.min(d.value / d.max, 1);
+      var bw = bh * hp, y = base - bw;
+      svg += '<rect x="'+(x+2)+'" y="'+(y+2)+'" width="'+barW+'" height="'+bw+'" rx="3" fill="rgba(0,0,0,0.15)"/>';
+      svg += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bw+'" rx="3" fill="url(#bg'+i+')" opacity="0.85"/>';
+      svg += '<text x="'+(x+barW/2)+'" y="'+(y-7)+'" fill="#e8eaed" font-size="11" font-weight="700" text-anchor="middle">'+d.value+d.unit+'</text>';
+      svg += '<text x="'+(x+barW/2)+'" y="'+(base+16)+'" fill="#6c7282" font-size="10" text-anchor="middle">'+d.label+'</text>';
+    });
+    svg += '</svg>';
+    container.innerHTML = svg;
   }
 
   // ===== PLAN GENERATOR =====
@@ -1372,6 +1413,17 @@
       '<div class="rr"><span class="rrl">⚠️ Risk Level</span><span class="rrv">' + p.riskLevel + '</span></div>' +
       '<div class="rr"><span class="rrl">🔥 Streak</span><span class="rrv" style="color:#f0b429">' + streak + ' days</span></div>' +
       '</div>' +
+      '<div class="r"><div class="rh">📈 Metrics Bar Chart</div>' +
+      '<div style="margin-top:12px;text-align:center">' +
+      '<svg viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto">' +
+      '<defs><linearGradient id="rgb0" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#00a865"/><stop offset="100%" stop-color="#00e887"/></linearGradient>' +
+      '<linearGradient id="rgb1" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#d97706"/><stop offset="100%" stop-color="#f0b429"/></linearGradient>' +
+      '<linearGradient id="rgb2" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0077b6"/><stop offset="100%" stop-color="#00b8ff"/></linearGradient>' +
+      '<linearGradient id="rgb3" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#5b21b6"/><stop offset="100%" stop-color="#7c5cfc"/></linearGradient>' +
+      '<linearGradient id="rgb4" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#4338ca"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs>' +
+      '<rect width="500" height="220" fill="transparent"/>' +
+      (function(){ var b=205,h=170,sx=40,bw=56,gap=22,c=[['BMI',Math.round(p.bmi*10)/10,40,'',0],['Calories',p.tdee,3500,'',1],['Water',p.water,5,'L',2],['Fitness',p.score,100,'',3],['Sleep',p.age<18?9:p.age<=35?8:p.age<=50?7.5:7,10,'h',4]],r='';[0.25,0.5,0.75,1].forEach(function(pct){var y=b-h*pct;r+='<line x1="'+(sx-5)+'" y1="'+y+'" x2="'+(sx+5*bw+4*gap+5)+'" y2="'+y+'" stroke="#2a3040" stroke-width="1" stroke-dasharray="3,3"/>';r+='<text x="'+(sx-10)+'" y="'+(y+3)+'" fill="#4a5060" font-size="8" text-anchor="end">'+Math.round(pct*100)+'%</text>'});c.forEach(function(d,i){var x=sx+i*(bw+gap),hp=Math.min(d[1]/d[2],1),bw2=h*hp,y2=b-bw2;r+='<rect x="'+(x+1)+'" y="'+(y2+1)+'" width="'+bw+'" height="'+bw2+'" rx="3" fill="rgba(0,0,0,0.15)"/>';r+='<rect x="'+x+'" y="'+y2+'" width="'+bw+'" height="'+bw2+'" rx="3" fill="url(#rgb'+d[4]+')" opacity="0.85"/>';r+='<text x="'+(x+bw/2)+'" y="'+(y2-6)+'" fill="#e8eaed" font-size="10" font-weight="700" text-anchor="middle">'+d[1]+d[3]+'</text>';r+='<text x="'+(x+bw/2)+'" y="'+(b+14)+'" fill="#6c7282" font-size="9" text-anchor="middle">'+d[0]+'</text>'});return r})() +
+      '</svg></div></div>' +
       '<div class="r"><div class="rh">💡 Tips</div>' +
       '<div style="margin-top:12px;font-size:14px;color:#a8adb8;line-height:1.8">' +
       '✅ ' + (p.bmi >= 18.5 && p.bmi < 25 ? 'Your BMI is in the healthy range. Keep it up!' : p.bmi < 18.5 ? 'Try to gain some weight with a calorie surplus and strength training.' : 'Focus on a calorie deficit and increased physical activity.') + '<br>' +
@@ -1453,6 +1505,7 @@
       riskEl.style.background = riskLevel === 'Low Risk' ? 'rgba(16,185,129,0.1)' : riskLevel === 'Medium Risk' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
     }
     generatePlan(restoreData);
+    renderChart({ bmi: bmi, tdee: saved.tdee, water: water, score: score, age: saved.age });
   }
 
   // ===== NOTIFICATION SYSTEM =====
