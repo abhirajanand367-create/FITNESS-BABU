@@ -264,20 +264,22 @@
     unlockBadge('fitpro');
     safeSet('fithomey_profile', JSON.stringify({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, problem: d.problem, bmi: bmi, tdee: tdee, water: water, score: score, riskLevel: riskLevel }));
     renderChart({ bmi: bmi, tdee: tdee, water: water, score: score, age: d.age });
+    renderGoals({ bmi: bmi, tdee: tdee, water: water, waterRaw: water, score: score, age: d.age });
   }
 
-  // ===== BAR CHART =====
+  // ===== BAR CHART WITH GOAL MARKERS =====
   function renderChart(m) {
     var container = $('chartContainer');
     if (!container) return;
     var age = m.age || 30;
     var sleep = age < 18 ? 9 : age <= 35 ? 8 : age <= 50 ? 7.5 : 7;
+    var goals = computeGoals(m);
     var data = [
-      { label: 'BMI', value: Math.round(m.bmi*10)/10, max: 40, unit: '', c1: '#00e887', c2: '#00a865' },
-      { label: 'Calories', value: m.tdee, max: 3500, unit: '', c1: '#f0b429', c2: '#d97706' },
-      { label: 'Water', value: m.water, max: 5, unit: 'L', c1: '#00b8ff', c2: '#0077b6' },
-      { label: 'Fitness', value: m.score, max: 100, unit: '', c1: '#7c5cfc', c2: '#5b21b6' },
-      { label: 'Sleep', value: sleep, max: 10, unit: 'h', c1: '#6366f1', c2: '#4338ca' }
+      { label: 'BMI', value: Math.round(m.bmi*10)/10, max: 40, unit: '', target: goals[0].targetVal, c1: '#00e887', c2: '#00a865' },
+      { label: 'Calories', value: m.tdee, max: 3500, unit: '', target: goals[1].targetVal, c1: '#f0b429', c2: '#d97706' },
+      { label: 'Water', value: m.water, max: 5, unit: 'L', target: goals[2].targetVal, c1: '#00b8ff', c2: '#0077b6' },
+      { label: 'Fitness', value: m.score, max: 100, unit: '', target: goals[3].targetVal, c1: '#7c5cfc', c2: '#5b21b6' },
+      { label: 'Sleep', value: sleep, max: 10, unit: 'h', target: goals[4].targetVal, c1: '#6366f1', c2: '#4338ca' }
     ];
     var w = 500, h = 250, barW = 56, gap = 22;
     var cw = data.length * barW + (data.length - 1) * gap;
@@ -286,8 +288,7 @@
     data.forEach(function(d,i){
       svg += '<linearGradient id="bg'+i+'" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="'+d.c2+'"/><stop offset="100%" stop-color="'+d.c1+'"/></linearGradient>';
     });
-    svg += '</defs>';
-    svg += '<rect width="'+w+'" height="'+h+'" fill="transparent"/>';
+    svg += '</defs><rect width="'+w+'" height="'+h+'" fill="transparent"/>';
     [0.25,0.5,0.75,1].forEach(function(p){
       var y = base - bh * p;
       svg += '<line x1="'+(sx-8)+'" y1="'+y+'" x2="'+(sx+cw+8)+'" y2="'+y+'" stroke="#2a3040" stroke-width="1" stroke-dasharray="3,3"/>';
@@ -300,10 +301,78 @@
       svg += '<rect x="'+(x+2)+'" y="'+(y+2)+'" width="'+barW+'" height="'+bw+'" rx="3" fill="rgba(0,0,0,0.15)"/>';
       svg += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bw+'" rx="3" fill="url(#bg'+i+')" opacity="0.85"/>';
       svg += '<text x="'+(x+barW/2)+'" y="'+(y-7)+'" fill="#e8eaed" font-size="11" font-weight="700" text-anchor="middle">'+d.value+d.unit+'</text>';
+      // Goal target line
+      var tp = Math.min(d.target / d.max, 1);
+      var ty = base - bh * tp;
+      if (tp > 0 && tp < 1) {
+        svg += '<line x1="'+(x-3)+'" y1="'+ty+'" x2="'+(x+barW+3)+'" y2="'+ty+'" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/>';
+        svg += '<text x="'+(x+barW+5)+'" y="'+(ty+3)+'" fill="rgba(255,255,255,0.7)" font-size="7">Goal</text>';
+      }
       svg += '<text x="'+(x+barW/2)+'" y="'+(base+16)+'" fill="#6c7282" font-size="10" text-anchor="middle">'+d.label+'</text>';
     });
     svg += '</svg>';
     container.innerHTML = svg;
+  }
+
+  // ===== GOALS CALCULATOR & RENDERER =====
+  function computeGoals(m) {
+    var age = m.age || 30;
+    var sleep = age < 18 ? 9 : age <= 35 ? 8 : age <= 50 ? 7.5 : 7;
+    var bmi = m.bmi, water = m.water, score = m.score;
+    var bmiTarget = 22, bmiLo = 18.5, bmiHi = 24.9;
+    var bmiGoal = bmiLo+'-'+bmiHi;
+    var bmiStatus = bmi >= bmiLo && bmi <= bmiHi ? 'good' : bmi < 18.5 ? 'warn' : 'bad';
+    var bmiLabel = bmi >= bmiLo && bmi <= bmiHi ? '✅ Healthy' : bmi < 18.5 ? '⚠️ Underweight' : '❌ Overweight';
+
+    var calTarget = m.tdee;
+    var calGoal = calTarget + ' cal';
+    var calStatus = 'good';
+    var calLabel = '✅ On Track';
+
+    var waterTarget = water;
+    var waterGoal = waterTarget + ' L';
+    var waterStatus = 'good';
+    var waterLabel = '✅ Good';
+    if (m.waterRaw) { waterTarget = m.waterRaw; waterGoal = waterTarget + ' L'; }
+    // Water status: if current < target by >0.3, flag it
+    if (water < waterTarget - 0.3) { waterStatus = 'bad'; waterLabel = '❌ Low'; }
+    else if (water < waterTarget) { waterStatus = 'warn'; waterLabel = '⚠️ Slightly Low'; }
+
+    var fitTarget = 80;
+    var fitGoal = '80+ /100';
+    var fitStatus = score >= fitTarget ? 'good' : score >= 60 ? 'warn' : 'bad';
+    var fitLabel = score >= fitTarget ? '✅ Excellent' : score >= 60 ? '⚠️ Good' : '❌ Needs Work';
+
+    var sleepTarget = sleep;
+    var sleepGoal = sleepTarget + ' h';
+    var sleepStatus = 'good';
+    var sleepLabel = '✅ Optimal';
+    var sleepDiff = Math.abs(sleep - sleepTarget);
+    if (sleepDiff > 1.5) { sleepStatus = 'bad'; sleepLabel = '❌ Poor'; }
+    else if (sleepDiff > 0.5) { sleepStatus = 'warn'; sleepLabel = '⚠️ Suboptimal'; }
+
+    return [
+      { icon: 'fa-weight', label: 'BMI', value: bmi.toFixed(1), target: bmiGoal, targetVal: bmiTarget, status: bmiStatus, statusLabel: bmiLabel },
+      { icon: 'fa-fire', label: 'Calories', value: calTarget, target: calGoal, targetVal: calTarget, status: calStatus, statusLabel: calLabel },
+      { icon: 'fa-tint', label: 'Water', value: water+'L', target: waterGoal, targetVal: waterTarget, status: waterStatus, statusLabel: waterLabel },
+      { icon: 'fa-heartbeat', label: 'Fitness', value: score+'/100', target: fitGoal, targetVal: fitTarget, status: fitStatus, statusLabel: fitLabel },
+      { icon: 'fa-bed', label: 'Sleep', value: sleep+'h', target: sleepGoal, targetVal: sleepTarget, status: sleepStatus, statusLabel: sleepLabel }
+    ];
+  }
+
+  function renderGoals(m) {
+    var grid = $('goalsGrid');
+    if (!grid) return;
+    var g = computeGoals(m);
+    grid.innerHTML = '<div class="goal-row" style="font-size:0.75rem;color:var(--text-muted);border-bottom:2px solid var(--border);padding-bottom:10px;margin-bottom:4px;background:transparent;border-left:none;border-right:none;border-top:none">' +
+      '<span>Metric</span><span>Your Value</span><span>Goal</span><span style="text-align:center">Status</span></div>' +
+      g.map(function(r) {
+        var cls = r.status === 'good' ? 'good' : r.status === 'warn' ? 'warn' : 'bad';
+        return '<div class="goal-row"><div class="goal-label"><i class="fas '+r.icon+'" style="color:'+(r.status==='bad'?'#ef4444':r.status==='warn'?'#f59e0b':'#10b981')+'"></i>'+r.label+'</div>' +
+          '<div class="goal-current">'+r.value+'</div>' +
+          '<div class="goal-target">'+r.target+'</div>' +
+          '<div class="goal-status '+cls+'">'+r.statusLabel+'</div></div>';
+      }).join('');
   }
 
   // ===== PLAN GENERATOR =====
@@ -469,6 +538,15 @@
         eat: ['🐟 Fatty Fish (salmon)','🥚 Eggs','🥑 Avocado','🥜 Nuts & Seeds (flax, chia, sunflower)','🫐 Berries','🥬 Spinach & Leafy Greens','🍊 Citrus Fruits (vitamin C)','🥛 Greek Yogurt','🫒 Olive Oil','🍫 Dark Chocolate','🍵 Green Tea','🥕 Carrots & Bell Peppers'],
         avoid: ['🚫 Sugary Drinks','🚫 Fried Foods','🚫 Excess Dairy','🚫 Processed Carbs','🚫 Alcohol','🚫 Excess Salt','🚫 Spicy Food (acne-prone)','🚫 Caffeine (excess)'],
         bed:'10:30 PM',wake:'6:30 AM',nap:'20 min after lunch',dur:'8 hours',label:'✨ Skin & Hair Glow'
+      },
+      height_increase: {
+        home: ['Dead Hang (3x30s – decompresses spine)','Cobra Stretch (3x30s)','Cat-Cow Stretch (12 reps)','Mountain Pose Hold (2 min)','Jump Squats (3x10)','Superman Hold (3x20s)','Forward Fold (3x30s)','Bridge Pose (3x20s)','Side Stretch (30s each)','Child\'s Pose (1 min)','Tuck Jumps (3x8)','Wall Angels (3x10)','Spinal Twist (30s each)','Standing Side Bends (30s each)','Calf Stretch (30s each)'],
+        gym: ['Dead Hang from Pull-up Bar (3x45s)','Lat Pulldown (4x10)','Assisted Pull-ups (3x8)','Hanging Leg Raises (3x10)','Standing Overhead Press (3x10)','Cable Face Pulls (3x12)','Jump Squats on Box (3x8)','Rowing Machine (15 min)','Swimming Laps (if available)','Dumbbell Lateral Raises (3x10)','Cable Pullovers (3x10)','Roman Chair Back Extensions (3x12)','Elliptical (15 min)','Kettlebell Swing (3x12)','Stretching Cool-down (10 min)'],
+        meals_v: [{name:'Breakfast',desc:'Oatmeal + milk + banana + almonds + pumpkin seeds'},{name:'Snack',desc:'Greek yogurt + mixed nuts + chia seeds'},{name:'Lunch',desc:'Paneer wrap + quinoa + spinach + bell peppers + lemon'},{name:'Snack',desc:'Smoothie (milk + banana + dates + nuts)'},{name:'Dinner',desc:'Lentil soup + brown rice + stir-fried veggies + cheese topping'}],
+        meals_nv: [{name:'Breakfast',desc:'Eggs (2) + milk + whole grain toast + banana + nuts'},{name:'Snack',desc:'Greek yogurt + almonds + pumpkin seeds'},{name:'Lunch',desc:'Grilled chicken breast + quinoa + spinach + sweet potato'},{name:'Snack',desc:'Smoothie (milk + banana + protein powder)'},{name:'Dinner',desc:'Grilled salmon + brown rice + steamed broccoli + carrots'}],
+        eat: ['🥛 Milk & Dairy (calcium)','🥚 Eggs (protein + D)','🐟 Fatty Fish (salmon, tuna)','🍗 Chicken Breast (lean protein)','🥜 Nuts & Seeds (almonds, pumpkin, chia)','🥬 Leafy Greens (spinach, kale)','🧀 Paneer & Cheese','🫘 Soybeans & Tofu','🍠 Sweet Potatoes (vitamin A)','🥕 Carrots','🍊 Citrus Fruits (vitamin C)','🍌 Bananas (potassium + carbs)','🌾 Whole Grains (oats, quinoa)','🥛 Greek Yogurt'],
+        avoid: ['🚫 Excess Sugar (blocks HGH)','🚫 Carbonated Drinks (phosphorus leaches calcium)','🚫 Excess Caffeine','🚫 Processed Foods','🚫 Smoking & Alcohol (COMPLETELY)','🚫 Excess Salt','🚫 Fried Foods','🚫 Energy Drinks'],
+        bed:'9:30 PM',wake:'5:30 AM',nap:'20 min after lunch',dur:'8-9 hours',label:'📏 Height Growth Mode'
       }
     };
 
@@ -645,12 +723,41 @@
       return '<div class="meal-item"><div class="meal-name">' + m.name + '</div><div class="meal-desc">' + m.desc + '</div></div>';
     }).join('');
 
-    // --- FOODS TO EAT ---
+    // --- FOODS TO EAT (personalized by profile + condition) ---
     var eat, eatLabel = $('foodsEatLabel');
+    var foodOpts = { isVeg: isVeg, isUnderweight: isUnderweight, isOverweightBMI: isOverweightBMI, isSenior: isSenior, isActive: isActive, isLow: isLow, isYoung: isYoung };
+
+    function personalizeFoods(baseEat, baseAvoid, o) {
+      var e = baseEat.slice(), a = baseAvoid.slice();
+      var nvIndicators = ['🐟','🥩','🍗'];
+      if (o.isVeg) {
+        e = e.filter(function(x){ return nvIndicators.every(function(n){ return x.indexOf(n)===-1; }); });
+        ['🧀 Paneer','🫘 Tofu','🌱 Plant Protein','🥛 Greek Yogurt'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); });
+        a = a.filter(function(x){ return nvIndicators.every(function(n){ return x.indexOf(n)===-1; }); });
+      } else {
+        ['🥚 Eggs','🍗 Chicken Breast','🐟 Fish'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); });
+      }
+      if (o.isUnderweight) { a = a.filter(function(x){ return x.indexOf('Low-Cal')===-1 && x.indexOf('Excess Fiber')===-1; });
+        ['🥜 Nut Butters','🥑 Avocado','🍇 Dried Fruits','🥛 Full-Fat Dairy','🍚 Rice','🥔 Potatoes','🧀 Cheese'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); }); }
+      if (o.isOverweightBMI) { a.push('🚫 Hidden Sugars','🚫 High-Cal Sauces');
+        ['🥬 Extra Leafy Greens','🥦 Cruciferous Veggies','🌱 Sprouts'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); }); }
+      if (o.isSenior) { a.push('🚫 Raw Undercooked Foods','🚫 Hard-to-Digest Foods');
+        ['🥛 Greek Yogurt','🍌 Ripe Bananas','🥬 Cooked Greens'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); }); }
+      if (o.isYoung) { a.push('🚫 Sugary Cereals','🚫 Aerated Drinks'); }
+      if (o.isActive) {
+        ['🍌 Bananas','🌾 Oats','🍠 Sweet Potato','🥛 Greek Yogurt'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); }); }
+      if (o.isLow) {
+        ['🥒 Cucumber','🍅 Tomato','🥗 Salad Greens'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); }); }
+      if (e.length > 14 && baseEat.length < 14) e = e.slice(0,14);
+      if (a.length > 12) a = a.slice(0,12);
+      return { eat: e, avoid: a };
+    }
+
     if (isMenstruating) {
       eat = ['🥬 Spinach & Leafy Greens', '🥚 Eggs', '🐟 Fatty Fish (salmon/sardines)', '🍫 Dark Chocolate (70%+)', '🍌 Bananas', '🥜 Pumpkin Seeds & Almonds', '🫘 Lentils & Beans', '🫐 Berries', '🧀 Tofu', '🌾 Whole Grains', '🥛 Warm Turmeric Milk', '🍵 Ginger Tea'];
     } else if (problem !== 'general' && problemData[problem]) {
-      eat = problemData[problem].eat;
+      var pf = personalizeFoods(problemData[problem].eat, problemData[problem].avoid, foodOpts);
+      eat = pf.eat;
     } else if (isVeg) {
       if (isUnderweight) {
         eat = ['🥚 Eggs', '🧀 Paneer', '🥜 Nuts & Butters', '🥑 Avocado', '🍌 Bananas', '🌾 Whole Grains', '🥛 Full-Fat Dairy', '🍇 Dried Fruits'];
@@ -678,12 +785,12 @@
     }
     if (eatLabel) eatLabel.textContent = isMenstruating ? '🌸 Iron-Rich & Soothing Foods' : (problem !== 'general' && problemData[problem]) ? '🎯 Targeted Nutrition' : isVeg ? '🌱 Vegetarian Options' : '🥩 Non-Vegetarian Options';
 
-    // --- FOODS TO AVOID ---
+    // --- FOODS TO AVOID (personalized) ---
     var avoid;
     if (isMenstruating) {
       avoid = ['🚫 Excess Caffeine', '🚫 Sugary Drinks', '🚫 Fried/Oily Foods', '🚫 Spicy Food', '🚫 Alcohol', '🚫 Cold Drinks/Ice Cream', '🚫 Excess Salt (causes bloating)', '🚫 Dairy (if sensitive)'];
     } else if (problem !== 'general' && problemData[problem]) {
-      avoid = problemData[problem].avoid;
+      avoid = pf ? pf.avoid : personalizeFoods(problemData[problem].eat, problemData[problem].avoid, foodOpts).avoid;
     } else if (isVeg) {
       if (isUnderweight) {
         avoid = ['🚫 Junk Food', '🚫 Sugary Drinks', '🚫 Excess Caffeine', '🚫 Raw Salad (fill up on calories first)', '🚫 Artificial Sweeteners'];
@@ -1158,6 +1265,11 @@
           return '🌿 DIGESTIVE HEALTH GUIDE:\n\nCOMMON ISSUES:\nAcidity: Excess stomach acid (heartburn, reflux)\nGas/Bloating: Poor digestion, food intolerances\nConstipation: Low fiber, dehydration\nIBS: Stress-triggered gut sensitivity\n\nDIET PRINCIPLES:\n✔️ Cooked veggies, gentle grains (rice, oats), probiotic foods, ginger, fennel\n❌ Spicy, fried, raw, dairy (if sensitive), caffeine, alcohol, carbonated drinks\n\nLIFESTYLE: Eat slowly, no screens while eating, walk after meals\n\nFIBER: 25-30g/day (soluble: oats, banana; insoluble: veggies)\n\n⚠️ Persistent issues? See a gastroenterologist.';
         }, qr: ['Acidity relief','Gut healing foods','Probiotic guide','IBS management'] },
 
+        height_chat: { kw: ['height','growth','height increase','grow taller','get taller','stretch','spine','posture','height growth','height exercises','height diet','increase height'], resp: function(){
+          if (p && p.problem === 'height_increase') return pCtx+'📏 HEIGHT INCREASE (ACTIVE PROFILE):\n\nYour personalized height optimization plan:\n\nEXERCISES:\n- Dead hangs (decompresses spine) 3x30-45s daily\n- Cobra stretch & Cat-Cow (spinal flexibility)\n- Jump squats & tuck jumps (stimulates growth plates)\n- Mountain Pose & Wall Angels (posture correction)\n\nDIET:\n- HIGH CALCIUM: Milk, yogurt, paneer, leafy greens\n- HIGH PROTEIN: Eggs, chicken, fish, lentils, soy\n- ZINC: Pumpkin seeds, chickpeas, nuts\n- VITAMIN D: Sunlight 15min/day, fatty fish, fortified foods\n- AVOID: Sugar (blocks HGH), carbonated drinks (leaches calcium)\n\nSLEEP (MOST IMPORTANT):\n- 8-9 hours daily (HGH released during deep sleep)\n- Bed by 9:30 PM, no screens 1h before bed\n- Blackout room for better melatonin\n\nREALITY: Genetics determines 60-80% of height. Focus on maximizing your potential through posture, spine health, and nutrition.';
+          return '📏 HEIGHT OPTIMIZATION GUIDE:\n\nCAN YOU INCREASE HEIGHT?\n- Growth plates close ~18-25 (later for males)\n- If plates are open: proper nutrition + sleep can maximize potential\n- If plates are closed: improve posture (adds 1-3 inches visually)\n\nKEY FACTORS:\n1. SLEEP: 8-9h (HGH secreted in deep sleep cycles)\n2. NUTRITION: Protein, Calcium, Zinc, Vitamin D, Vitamin K2\n3. EXERCISE: Hanging, stretching, jumping, swimming\n4. POSTURE: Correct alignment adds visible height\n5. AVOID: Smoking, alcohol, excess sugar, caffeine, poor sleep\n\nEXERCISES:\n- Dead hangs from bar (30-60s, 3 sets)\n- Cobra stretch (opens chest, decompresses spine)\n- Cat-Cow (spinal flexibility)\n- Forward fold (hamstring release, pelvic alignment)\n- Jump squats (lower body stimulation)\n- Wall angels (upper back posture)\n\nFOODS: Milk, eggs, chicken, fish, paneer, leafy greens, nuts, seeds, sweet potatoes\n\n⚠️ Be realistic — genetics play the biggest role. Focus on becoming the tallest VERSION of YOURSELF.';
+        }, qr: ['Height exercises','Best foods','Sleep tips','Posture guide'] },
+
         stress_chat: { kw: ['stress','anxiety','mental health','depression','mood','mental wellness','overthinking','relaxation','calm','meditation','mindfulness','mental peace','tension','panic'], resp: function(){
           if (p && p.problem === 'stress') return pCtx+'🧘 STRESS MANAGEMENT (ACTIVE PROFILE):\n\nYour personalized plan focuses on nervous system regulation:\n\nEXERCISE: Yoga, walking, gentle movement — NO intense cardio (raises cortisol)\nMorning sunlight exposure (regulates circadian rhythm)\n\nDIET:\n- Magnesium-rich: Dark chocolate, nuts, seeds, bananas\n- Omega-3s: Salmon, walnuts (lowers stress hormones)\n- Adaptogens: Chamomile tea, ashwagandha, tulsi\n- AVOID: Caffeine (excess), alcohol, sugar spikes\n\nLIFESTYLE:\n- 10 min meditation daily (lowers cortisol by 20%)\n- 7-9h sleep (non-negotiable)\n- Digital detox 1h before bed\n- Deep breathing: 4-7-8 technique (instant calm)';
           return '🧘 STRESS & ANXIETY — SCIENCE-BASED GUIDE:\n\nPHYSIOLOGY: Stress triggers cortisol & adrenaline. Chronic stress = elevated cortisol = weight gain, poor sleep, weakened immunity, brain fog.\n\nPROVEN STRESS REDUCERS:\n1. Meditation: 10 min/day (reduces amygdala size)\n2. Exercise: Moderate walking/yoga (NOT intense)\n3. Nature: 20 min outdoors (lower cortisol by 21%)\n4. Social Connection: Reduces stress hormones\n5. Sleep: 7-9h (critical for emotional regulation)\n\nFOODS: Dark chocolate, fatty fish, nuts, berries, green tea\n\nAVOID: Excess caffeine, alcohol, sugar, processed foods\n\n4-7-8 BREATHING: Inhale 4s, hold 7s, exhale 8s. Repeat 5 times.';
@@ -1374,7 +1486,7 @@
   downloadBtn && downloadBtn.addEventListener('click', function() {
     var p = safeJSON('fithomey_profile', null);
     if (!p) { alert('Please complete the assessment first!'); return; }
-    var problemNames = { general:'General Fitness', weight_loss:'Weight Loss', weight_gain:'Weight Gain', diabetes:'Diabetes', pcod:'PCOD/PCOS', thyroid:'Thyroid', high_bp:'High BP', cholesterol:'Cholesterol', joint_pain:'Joint Pain', digestive:'Digestive Health', anemia:'Anemia', heart:'Heart Health', liver:'Liver Health', kidney:'Kidney Health', stress:'Stress & Anxiety', skin_hair:'Skin & Hair' };
+    var problemNames = { general:'General Fitness', weight_loss:'Weight Loss', weight_gain:'Weight Gain', diabetes:'Diabetes', pcod:'PCOD/PCOS', thyroid:'Thyroid', high_bp:'High BP', cholesterol:'Cholesterol', joint_pain:'Joint Pain', digestive:'Digestive Health', anemia:'Anemia', heart:'Heart Health', liver:'Liver Health', kidney:'Kidney Health', stress:'Stress & Anxiety', skin_hair:'Skin & Hair', height_increase:'Height Increase' };
     var riskColor = p.riskLevel === 'High Risk' ? '#ef4444' : p.riskLevel === 'Medium Risk' ? '#f59e0b' : '#10b981';
     var fitLevel = p.score >= 80 ? 'Excellent' : p.score >= 60 ? 'Good' : p.score >= 40 ? 'Average' : 'Needs Improvement';
     var report = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>FITHOMEY Report</title>' +
@@ -1424,6 +1536,10 @@
       '<rect width="500" height="220" fill="transparent"/>' +
       (function(){ var b=205,h=170,sx=40,bw=56,gap=22,c=[['BMI',Math.round(p.bmi*10)/10,40,'',0],['Calories',p.tdee,3500,'',1],['Water',p.water,5,'L',2],['Fitness',p.score,100,'',3],['Sleep',p.age<18?9:p.age<=35?8:p.age<=50?7.5:7,10,'h',4]],r='';[0.25,0.5,0.75,1].forEach(function(pct){var y=b-h*pct;r+='<line x1="'+(sx-5)+'" y1="'+y+'" x2="'+(sx+5*bw+4*gap+5)+'" y2="'+y+'" stroke="#2a3040" stroke-width="1" stroke-dasharray="3,3"/>';r+='<text x="'+(sx-10)+'" y="'+(y+3)+'" fill="#4a5060" font-size="8" text-anchor="end">'+Math.round(pct*100)+'%</text>'});c.forEach(function(d,i){var x=sx+i*(bw+gap),hp=Math.min(d[1]/d[2],1),bw2=h*hp,y2=b-bw2;r+='<rect x="'+(x+1)+'" y="'+(y2+1)+'" width="'+bw+'" height="'+bw2+'" rx="3" fill="rgba(0,0,0,0.15)"/>';r+='<rect x="'+x+'" y="'+y2+'" width="'+bw+'" height="'+bw2+'" rx="3" fill="url(#rgb'+d[4]+')" opacity="0.85"/>';r+='<text x="'+(x+bw/2)+'" y="'+(y2-6)+'" fill="#e8eaed" font-size="10" font-weight="700" text-anchor="middle">'+d[1]+d[3]+'</text>';r+='<text x="'+(x+bw/2)+'" y="'+(b+14)+'" fill="#6c7282" font-size="9" text-anchor="middle">'+d[0]+'</text>'});return r})() +
       '</svg></div></div>' +
+      '<div class="r"><div class="rh">🎯 Goals vs Current Status</div>' +
+      '<div style="margin-top:10px;font-size:13px;color:#a8adb8;line-height:1.8">' +
+      (function(){ var a=p.age||30,s=a<18?9:a<=35?8:a<=50?7.5:7,b=p.bmi,g=[ [1,'weight','BMI',b.toFixed(1),'18.5-24.9',22], [2,'fire','Calories',p.tdee,'TDEE',p.tdee], [3,'tint','Water',p.water+'L',p.water+'L',p.water], [4,'heartbeat','Fitness',p.score+'/100','80+ /100',80], [5,'bed','Sleep',s+'h',s+'h',s] ],st=function(v,t,l,h){return v>=l&&v<=h?'✅ Good':v<l?'⚠️ Low':'❌ High'},r='<table style="width:100%;border-collapse:collapse;font-size:13px">'+'<tr style="border-bottom:1px solid #2a3040;color:#6c7282"><td style="padding:8px 6px;font-weight:600">Metric</td><td style="padding:8px 6px">You</td><td style="padding:8px 6px">Goal</td><td style="padding:8px 6px;text-align:center">Status</td></tr>';g.forEach(function(d){var v=d[3],t=d[4],c;if(d[0]===1)c=b>=18.5&&b<=24.9?'#10b981':b<18.5?'#f59e0b':'#ef4444';else if(d[0]===5)c=Math.abs(s-d[5])>1?'#ef4444':Math.abs(s-d[5])>0.5?'#f59e0b':'#10b981';else c='#10b981';var l=d[0]===1?st(b,'18.5','24.9'):d[0]===5?Math.abs(s-d[5])>1?'❌ Poor':Math.abs(s-d[5])>0.5?'⚠️ Suboptimal':'✅ Optimal':'✅ On Track';r+='<tr style="border-bottom:1px solid #2a3040"><td style="padding:10px 6px;font-weight:600;color:#e8eaed">'+d[2]+'</td><td style="padding:10px 6px">'+v+'</td><td style="padding:10px 6px;color:#00e887">'+t+'</td><td style="padding:10px 6px;text-align:center;color:'+c+';font-weight:600">'+l+'</td></tr>'});return r+'</table>'})() +
+      '</div></div>' +
       '<div class="r"><div class="rh">💡 Tips</div>' +
       '<div style="margin-top:12px;font-size:14px;color:#a8adb8;line-height:1.8">' +
       '✅ ' + (p.bmi >= 18.5 && p.bmi < 25 ? 'Your BMI is in the healthy range. Keep it up!' : p.bmi < 18.5 ? 'Try to gain some weight with a calorie surplus and strength training.' : 'Focus on a calorie deficit and increased physical activity.') + '<br>' +
@@ -1506,6 +1622,7 @@
     }
     generatePlan(restoreData);
     renderChart({ bmi: bmi, tdee: saved.tdee, water: water, score: score, age: saved.age });
+    renderGoals({ bmi: bmi, tdee: saved.tdee, water: water, waterRaw: water, score: score, age: saved.age });
   }
 
   // ===== NOTIFICATION SYSTEM =====
