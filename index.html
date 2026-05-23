@@ -200,11 +200,16 @@
               <option value="female">Female</option>
             </select>
             <div class="menstruation-wrap" id="menstruationWrap" style="display:none;margin-top:10px">
-              <label class="menstruation-toggle">
-                <input type="checkbox" id="menstruation">
-                <span class="toggle-slider-sm"></span>
-                <span class="menstruation-label"><i class="fas fa-venus"></i> Currently on Menstruation</span>
-              </label>
+              <label class="menstruation-head"><i class="fas fa-venus"></i> Currently on Menstruation?</label>
+              <div class="menstruation-options">
+                <div class="menstruation-option" data-value="no">
+                  <i class="fas fa-times-circle"></i><span>No</span>
+                </div>
+                <div class="menstruation-option active" data-value="yes">
+                  <i class="fas fa-check-circle"></i><span>Yes</span>
+                </div>
+              </div>
+              <input type="hidden" id="menstruation" value="no">
               <p class="menstruation-hint">Special light exercise & recovery plan will be generated</p>
             </div>
           </div>

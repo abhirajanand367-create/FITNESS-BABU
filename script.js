@@ -96,13 +96,27 @@
 
   // ===== GENDER → MENSTRUATION TOGGLE =====
   var genderEl = $('gender');
-  var menstruationEl = $('menstruation');
   var menstruationWrap = $('menstruationWrap');
+  var menstruationHidden = $('menstruation');
   function toggleMenstruation(g) {
     if (!menstruationWrap) return;
     menstruationWrap.style.display = g === 'female' ? 'block' : 'none';
-    if (g !== 'female' && menstruationEl) menstruationEl.checked = false;
+    if (g !== 'female' && menstruationHidden) {
+      menstruationHidden.value = 'no';
+      document.querySelectorAll('.menstruation-option').forEach(function(o) { o.classList.remove('active'); });
+      var noOpt = document.querySelector('.menstruation-option[data-value="no"]');
+      if (noOpt) noOpt.classList.add('active');
+    }
   }
+  function handleMenstruationSelect(opt) {
+    document.querySelectorAll('.menstruation-option').forEach(function(o) { o.classList.remove('active'); });
+    opt.classList.add('active');
+    if (menstruationHidden) menstruationHidden.value = opt.dataset.value;
+  }
+  document.querySelectorAll('.menstruation-option').forEach(function(opt) {
+    opt.addEventListener('click', function() { handleMenstruationSelect(this); });
+    opt.addEventListener('touchstart', function(e) { e.preventDefault(); handleMenstruationSelect(this); }, { passive: false });
+  });
   if (genderEl) {
     genderEl.addEventListener('change', function() { toggleMenstruation(this.value); });
   }
@@ -110,7 +124,11 @@
   var savedProfile = safeJSON('fithomey_profile', null);
   if (savedProfile && savedProfile.gender === 'female' && menstruationWrap) {
     toggleMenstruation('female');
-    if (menstruationEl && savedProfile.menstruation) menstruationEl.checked = true;
+    if (menstruationHidden && savedProfile.menstruation) {
+      menstruationHidden.value = 'yes';
+      var yesOpt = document.querySelector('.menstruation-option[data-value="yes"]');
+      if (yesOpt) { document.querySelectorAll('.menstruation-option').forEach(function(o) { o.classList.remove('active'); }); yesOpt.classList.add('active'); }
+    }
   }
 
   // ===== ANALYZE =====
@@ -124,7 +142,7 @@
     var gender = $('gender').value;
     var activity = activityHidden.value;
     var diet = dietHidden.value;
-    var menstruation = menstruationEl ? menstruationEl.checked : false;
+    var menstruation = menstruationHidden ? menstruationHidden.value === 'yes' : false;
     return { age: age, height: height, weight: weight, gender: gender, activity: activity, diet: diet, menstruation: menstruation };
   }
 
@@ -1146,7 +1164,11 @@
     };
     if (saved.gender === 'female') {
       toggleMenstruation('female');
-      if (menstruationEl && saved.menstruation) menstruationEl.checked = true;
+      if (menstruationHidden && saved.menstruation) {
+        menstruationHidden.value = 'yes';
+        var yesOpt2 = document.querySelector('.menstruation-option[data-value="yes"]');
+        if (yesOpt2) { document.querySelectorAll('.menstruation-option').forEach(function(o) { o.classList.remove('active'); }); yesOpt2.classList.add('active'); }
+      }
     }
     var heightM = saved.height / 100;
     var bmi = saved.bmi;

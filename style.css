@@ -159,15 +159,16 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,2
 .activity-option span{display:block;font-weight:600;font-size:0.9rem}
 .activity-option small{display:block;font-size:0.7rem;color:var(--text-muted);margin-top:2px}
 .menstruation-wrap{padding:12px 16px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border)}
-.menstruation-toggle{display:flex;align-items:center;gap:10px;cursor:pointer}
-.menstruation-toggle input{display:none}
-.toggle-slider-sm{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:var(--transition);flex-shrink:0}
-.toggle-slider-sm::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text-muted);transition:var(--transition)}
-.menstruation-toggle input:checked+.toggle-slider-sm{background:var(--purple)}
-.menstruation-toggle input:checked+.toggle-slider-sm::after{left:18px;background:#fff}
-.menstruation-label{font-size:0.85rem;font-weight:600;color:var(--text-primary)}
-.menstruation-label i{color:var(--purple);margin-right:4px}
-.menstruation-hint{font-size:0.7rem;color:var(--text-muted);margin-top:6px;padding-left:46px}
+.menstruation-head{display:flex;align-items:center;gap:6px;font-size:0.8rem;font-weight:600;color:var(--text-primary);margin-bottom:8px}
+.menstruation-head i{color:var(--purple)}
+.menstruation-options{display:flex;gap:8px}
+.menstruation-option{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:var(--radius-sm);border:2px solid var(--border);cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--text-secondary);background:var(--bg-secondary);transition:var(--transition)}
+.menstruation-option i{font-size:0.85rem}
+.menstruation-option.active{background:rgba(139,108,247,0.12);border-color:var(--purple);color:var(--purple)}
+.menstruation-option[data-value="yes"].active i{color:var(--purple)}
+.menstruation-option[data-value="no"].active i{color:var(--text-muted)}
+.menstruation-option:hover{border-color:var(--purple)}
+.menstruation-hint{font-size:0.7rem;color:var(--text-muted);margin-top:8px}
 .activity-option.active{border-color:var(--green);background:rgba(0,232,135,0.08)}
 .activity-option.active i{color:var(--green)}
 .activity-option:hover{border-color:var(--green)}
