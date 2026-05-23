@@ -94,6 +94,25 @@
     opt.addEventListener('touchstart', function(e) { e.preventDefault(); handleActivitySelect(this); }, { passive: false });
   });
 
+  // ===== GENDER → MENSTRUATION TOGGLE =====
+  var genderEl = $('gender');
+  var menstruationEl = $('menstruation');
+  var menstruationWrap = $('menstruationWrap');
+  function toggleMenstruation(g) {
+    if (!menstruationWrap) return;
+    menstruationWrap.style.display = g === 'female' ? 'block' : 'none';
+    if (g !== 'female' && menstruationEl) menstruationEl.checked = false;
+  }
+  if (genderEl) {
+    genderEl.addEventListener('change', function() { toggleMenstruation(this.value); });
+  }
+  // Re-check on saved profile restore
+  var savedProfile = safeJSON('fithomey_profile', null);
+  if (savedProfile && savedProfile.gender === 'female' && menstruationWrap) {
+    toggleMenstruation('female');
+    if (menstruationEl && savedProfile.menstruation) menstruationEl.checked = true;
+  }
+
   // ===== ANALYZE =====
   analyzeBtn && analyzeBtn.addEventListener('click', analyze);
 
@@ -105,7 +124,8 @@
     var gender = $('gender').value;
     var activity = activityHidden.value;
     var diet = dietHidden.value;
-    return { age: age, height: height, weight: weight, gender: gender, activity: activity, diet: diet };
+    var menstruation = menstruationEl ? menstruationEl.checked : false;
+    return { age: age, height: height, weight: weight, gender: gender, activity: activity, diet: diet, menstruation: menstruation };
   }
 
   var badgesData = [
@@ -218,16 +238,17 @@
     dashboardSec.style.display = 'block';
     planSec.style.display = 'block';
 
-    generatePlan({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, bmi: bmi, tdee: tdee });
+    generatePlan({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, bmi: bmi, tdee: tdee });
     dashboardSec.scrollIntoView({ behavior: 'smooth' });
     unlockBadge('fitpro');
-    safeSet('fithomey_profile', JSON.stringify({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, bmi: bmi, tdee: tdee, water: water, score: score, riskLevel: riskLevel }));
+    safeSet('fithomey_profile', JSON.stringify({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, bmi: bmi, tdee: tdee, water: water, score: score, riskLevel: riskLevel }));
   }
 
   // ===== PLAN GENERATOR =====
   function generatePlan(data) {
     var age = data.age, gender = data.gender, weight = data.weight, height = data.height;
     var bmi = data.bmi, activity = data.activity, tdee = data.tdee, diet = data.diet || 'nonveg';
+    var isMenstruating = gender === 'female' && data.menstruation === true;
 
     // Age groups
     var isYoung = age < 18, isAdult = age >= 18 && age <= 35, isMid = age > 35 && age <= 50, isSenior = age > 50;
@@ -241,53 +262,88 @@
     // Weight in kg ranges
     var isHeavy = weight > 90, isLight = weight < 55;
 
-    // --- HOME WORKOUT (personalized by age, gender, weight) ---
-    var homeEx;
-    if (isSenior || isYoung) {
-      homeEx = ['Brisk Walking (20 min)', 'Bodyweight Squats (3x10)', 'Wall Push-ups (3x10)', 'Seated Leg Raises (3x12)', 'Standing Calf Raises (3x15)', 'Cat-Cow Stretch (10 reps)', 'Arm Circles (30s each)'];
-    } else if (isOverweightBMI || isHeavy) {
-      homeEx = ['Walking Lunges (3x12)', 'Incline Push-ups (3x12)', 'Bodyweight Squats (3x15)', 'Glute Bridges (3x15)', 'Plank (3x25s)', 'Step-ups on Chair (3x10 each)', 'Arm Circles with Light Weights (3x12)'];
-    } else if (isActive && isAdult) {
-      homeEx = ['Burpees (3x12)', 'Pike Push-ups (3x10)', 'Bulgarian Split Squats (3x10 each)', 'Diamond Push-ups (3x8)', 'Handstand Hold (3x15s)', 'Pistol Squats (3x6 each)', 'Mountain Climbers (3x30s)'];
-    } else if (isUnderweight) {
-      homeEx = ['Bodyweight Squats (3x12)', 'Push-ups (3x8)', 'Lunges (3x10 each)', 'Plank (3x20s)', 'Glute Bridges (3x12)', 'Crunches (3x12)', 'Jumping Jacks (3x20)'];
-    } else {
-      homeEx = ['Push-ups (3x12)', 'Bodyweight Squats (3x15)', 'Plank (3x30s)', 'Lunges (3x10 each)', 'Glute Bridges (3x15)', 'Calf Raises (3x20)', 'High Knees (3x30s)'];
+    // --- HOME WORKOUT (personalized + randomized each time) ---
+    function pick(n, pool) {
+      var s = pool.slice(), r = [];
+      while (s.length && r.length < n) {
+        var i = Math.floor(Math.random() * s.length);
+        r.push(s.splice(i, 1)[0]);
+      }
+      return r;
     }
-    var homeEl = $('homeWorkoutList'); if (homeEl) homeEl.innerHTML = homeEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
+    var menstruationPool = ['Gentle Yoga Stretch (15 min)','Deep Breathing (5 min)','Pelvic Tilts (3x12)','Cat-Cow Stretch (10 reps)','Child\'s Pose Hold (2 min)','Light Walking (15 min)','Seated Spinal Twist (30s each)','Legs-Up-The-Wall (5 min)','Knee-to-Chest Stretch (30s each)','Supine Twist (30s each)','Happy Baby Pose (30s)','Butterfly Stretch (30s)','Neck Rolls (30s each)','Shoulder Rolls (20 reps)','Ankle Rotations (20 each)','Wrist Stretches (30s each)','Foam Rolling Lower Back (5 min)','Corpse Pose (5 min)','Standing Forward Bend (30s)','Side Bends (30s each)','Gentle Hip Circles (30s each)','Seated Forward Fold (30s)','Cobra Stretch (30s)','Sphinx Pose (30s)','Supine Hamstring Stretch (30s each)'];
+    if (isMenstruating) {
+      var homeEx = pick(7, menstruationPool);
+      var homeEl = $('homeWorkoutList'); if (homeEl) homeEl.innerHTML = homeEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
+      var gymEx = pick(7, menstruationPool);
+      var gymEl = $('gymWorkoutList'); if (gymEl) gymEl.innerHTML = gymEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
+    } else {
+      var homePools = {
+        seniorYoung: ['Brisk Walking (20 min)','Bodyweight Squats (3x10)','Wall Push-ups (3x10)','Seated Leg Raises (3x12)','Standing Calf Raises (3x15)','Cat-Cow Stretch (10 reps)','Arm Circles (30s each)','Chair Dips (3x10)','Marching in Place (3x30s)','Knee Push-ups (3x8)','Bird Dog (3x8 each)','Heel Raises (3x15)','Side Leg Raises (3x10 each)','Seated Twist (10 each)','Toe Touches (3x10)'],
+        overweight: ['Walking Lunges (3x12)','Incline Push-ups (3x12)','Bodyweight Squats (3x15)','Glute Bridges (3x15)','Plank (3x25s)','Step-ups on Chair (3x10 each)','Arm Circles with Light Weights (3x12)','Bird Dog (3x10 each)','Wall Sit (3x20s)','Standing Calf Raises (3x20)','Seated Band Rows (3x12)','Knee Push-ups (3x10)','Side Steps (3x12 each)','Donkey Kicks (3x12 each)','Slow Mountain Climbers (3x20s)'],
+        activeAdult: ['Burpees (3x12)','Pike Push-ups (3x10)','Bulgarian Split Squats (3x10 each)','Diamond Push-ups (3x8)','Handstand Hold (3x15s)','Pistol Squats (3x6 each)','Mountain Climbers (3x30s)','Box Jumps (3x10)','Archer Push-ups (3x6 each)','Single-Leg Deadlift (3x8 each)','Dragon Flags (3x6)','Jump Lunges (3x10 each)','Clapping Push-ups (3x8)','Tuck Jumps (3x10)','L-Sit Hold (3x10s)'],
+        underweight: ['Bodyweight Squats (3x12)','Push-ups (3x12)','Lunges (3x10 each)','Plank (3x25s)','Glute Bridges (3x15)','Crunches (3x15)','Jumping Jacks (3x25)','Calf Raises (3x20)','Diamond Push-ups (3x8)','Bicycle Crunches (3x15 each)','Reverse Lunges (3x10 each)','Side Plank (3x15s each)','Squat Jumps (3x8)','Tricep Dips on Chair (3x10)','High Knees (3x25s)'],
+        normal: ['Push-ups (3x15)','Bodyweight Squats (3x18)','Plank (3x35s)','Lunges (3x12 each)','Glute Bridges (3x18)','Calf Raises (3x25)','High Knees (3x35s)','Tricep Dips (3x12)','Mountain Climbers (3x25s)','Side Plank (3x20s each)','Squat Pulses (3x15)','Jump Squats (3x10)','Push-up Hold (3x15s)','Flutter Kicks (3x20 each)','Tabletop Rows (3x10 each)']
+      };
+      var homePool;
+      if (isSenior || isYoung) homePool = homePools.seniorYoung;
+      else if (isOverweightBMI || isHeavy) homePool = homePools.overweight;
+      else if (isActive && isAdult) homePool = homePools.activeAdult;
+      else if (isUnderweight) homePool = homePools.underweight;
+      else homePool = homePools.normal;
+      var homeEx = pick(7, homePool);
+      var homeEl = $('homeWorkoutList'); if (homeEl) homeEl.innerHTML = homeEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
+    }
 
-    // --- GYM WORKOUT (personalized) ---
-    var gymEx;
-    if (isSenior) {
-      gymEx = ['Treadmill Walk (20 min)', 'Seated Chest Press (3x10)', 'Leg Press Machine (3x12)', 'Lat Pulldown (3x10)', 'Seated Row (3x10)', 'Hip Abductor Machine (3x12)', 'Stationary Bike (15 min)'];
-    } else if (isYoung) {
-      gymEx = ['Bodyweight Squats (3x12)', 'Dumbbell Bench Press (3x10)', 'Lat Pulldown (3x10)', 'Leg Press (3x12)', 'Plank (3x20s)', 'Cycling (15 min)', 'Light Deadlifts (3x8)'];
-    } else if (isOverweightBMI) {
-      gymEx = ['Treadmill Walk (20 min incline)', 'Lat Pulldown (3x12)', 'Leg Press (3x15)', 'Seated Cable Row (3x12)', 'Chest Press Machine (3x12)', 'Cable Crunch (3x15)', 'Elliptical (15 min)'];
-    } else if (isActive && isAdult) {
-      gymEx = isMale
-        ? ['Deadlift (4x8)', 'Bench Press (4x8)', 'Barbell Row (4x8)', 'Overhead Press (4x8)', 'Back Squat (4x8)', 'Pull-ups (3x8)', 'HIIT Finisher (15 min)']
-        : ['Squats (4x10)', 'Dumbbell Bench Press (4x10)', 'Romanian Deadlift (4x10)', 'Lat Pulldown (4x10)', 'Hip Thrusts (4x12)', 'Dumbbell Shoulder Press (3x10)', 'Plank (3x40s)'];
-    } else if (isUnderweight) {
-      gymEx = isMale
-        ? ['Squats (4x10)', 'Bench Press (4x10)', 'Barbell Row (4x10)', 'Overhead Press (3x10)', 'Deadlift (3x8)', 'Pull-ups (3x6)', 'Bicep Curls (3x12)']
-        : ['Goblet Squats (4x10)', 'Dumbbell Bench Press (4x10)', 'Seated Cable Row (4x10)', 'Leg Press (4x12)', 'Dumbbell RDL (3x12)', 'Lat Pulldown (3x10)', 'Glute Kickbacks (3x12)'];
-    } else {
-      gymEx = ['Dumbbell Press (3x12)', 'Lat Pulldown (3x12)', 'Leg Press (3x15)', 'Dumbbell Row (3x12)', 'Plank (3x30s)', 'Cycling (20 min)', 'Cable Crossovers (3x12)'];
+    // --- GYM WORKOUT (personalized + randomized each time) ---
+    if (!isMenstruating) {
+      var gymPools = {
+        senior: ['Treadmill Walk (20 min)','Seated Chest Press (3x10)','Leg Press Machine (3x12)','Lat Pulldown (3x10)','Seated Row (3x10)','Hip Abductor Machine (3x12)','Stationary Bike (15 min)','Cable Bicep Curl (3x10)','Tricep Pushdown (3x10)','Shoulder Press Machine (3x10)','Chest Fly Machine (3x10)','Leg Curl Machine (3x12)','Elliptical (15 min)','Seated Calf Raise (3x15)','Back Extension (3x10)'],
+        young: ['Bodyweight Squats (3x12)','Dumbbell Bench Press (3x10)','Lat Pulldown (3x10)','Leg Press (3x12)','Plank (3x25s)','Cycling (15 min)','Light Deadlifts (3x8)','Dumbbell Row (3x10 each)','Cable Crossovers (3x10)','Leg Extension (3x12)','Hammer Curls (3x10)','Overhead Tricep (3x10)','Face Pulls (3x12)','Kettlebell Swings (3x12)','Farmers Walk (30s)'],
+        overweight: ['Treadmill Walk (20 min incline)','Lat Pulldown (3x12)','Leg Press (3x15)','Seated Cable Row (3x12)','Chest Press Machine (3x12)','Cable Crunch (3x15)','Elliptical (15 min)','Hip Adductor (3x15)','Shoulder Press Machine (3x12)','Leg Curl (3x15)','Seated Dip Machine (3x12)','Stair Climber (10 min)','Plank (3x20s)','Chest Fly (3x12)','Bicep Curl Machine (3x12)'],
+        activeMale: ['Deadlift (4x8)','Bench Press (4x8)','Barbell Row (4x8)','Overhead Press (4x8)','Back Squat (4x8)','Pull-ups (3x8)','HIIT Finisher (15 min)','Incline Bench (4x8)','Weighted Dips (3x10)','Barbell Shrugs (3x12)','Front Squat (4x6)','Pendlay Row (4x8)','Clean & Press (3x6)','Rack Pulls (3x8)','Chin-ups (3x8)'],
+        activeFemale: ['Squats (4x10)','Dumbbell Bench Press (4x10)','Romanian Deadlift (4x10)','Lat Pulldown (4x10)','Hip Thrusts (4x12)','Dumbbell Shoulder Press (3x10)','Plank (3x40s)','Walking Lunges (3x12 each)','Cable Kickbacks (3x15 each)','Leg Press (4x12)','Seated Row (4x10)','Bulgarian Split Squats (3x10 each)','Glute Bridge Machine (4x12)','Lateral Raises (3x12)','Step-ups (3x10 each)'],
+        underweightMale: ['Squats (4x10)','Bench Press (4x10)','Barbell Row (4x10)','Overhead Press (3x10)','Deadlift (3x8)','Pull-ups (3x6)','Bicep Curls (3x12)','Dumbbell Fly (3x10)','Tricep Pushdown (3x12)','Leg Press (4x12)','Face Pulls (3x12)','Dumbbell Shrugs (3x12)','Cable Crunch (3x12)','Farmers Walk (3x30s)','Hammer Curls (3x10)'],
+        underweightFemale: ['Goblet Squats (4x10)','Dumbbell Bench Press (4x10)','Seated Cable Row (4x10)','Leg Press (4x12)','Dumbbell RDL (3x12)','Lat Pulldown (3x10)','Glute Kickbacks (3x12)','Hip Thrusts (4x12)','Standing Calf Raises (3x15)','Cable Crossovers (3x10)','Dumbbell Lunges (3x10 each)','Plank (3x25s)','Step-ups (3x10 each)','Bicep Curls (3x10)','Lateral Raises (3x10)'],
+        normal: ['Dumbbell Press (3x12)','Lat Pulldown (3x12)','Leg Press (3x15)','Dumbbell Row (3x12)','Plank (3x30s)','Cycling (20 min)','Cable Crossovers (3x12)','Tricep Pushdown (3x12)','Hammer Curls (3x12)','Face Pulls (3x15)','Walking Lunges (3x12 each)','Leg Curl (3x15)','Shoulder Press (3x10)','Cable Crunch (3x15)','Hip Thrusts (3x15)']
+      };
+    var gymPool;
+    if (isSenior) gymPool = gymPools.senior;
+    else if (isYoung) gymPool = gymPools.young;
+    else if (isOverweightBMI) gymPool = gymPools.overweight;
+    else if (isActive && isAdult) gymPool = isMale ? gymPools.activeMale : gymPools.activeFemale;
+    else if (isUnderweight) gymPool = isMale ? gymPools.underweightMale : gymPools.underweightFemale;
+    else gymPool = gymPools.normal;
+      var gymEx = pick(7, gymPool);
+      var gymEl = $('gymWorkoutList'); if (gymEl) gymEl.innerHTML = gymEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
     }
-    var gymEl = $('gymWorkoutList'); if (gymEl) gymEl.innerHTML = gymEx.map(function(e) { return '<li>' + e + '</li>'; }).join('');
 
     // --- MEAL PLAN (personalized by age, gender, weight, activity, AND diet) ---
     var isVeg = diet === 'veg';
     var dietBadge = $('dietBadge');
     if (dietBadge) {
-      dietBadge.textContent = isVeg ? '🌱 Vegetarian' : '🥟 Non-Vegetarian';
-      dietBadge.style.background = isVeg ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)';
-      dietBadge.style.color = isVeg ? '#10b981' : '#ef4444';
-      dietBadge.style.borderColor = isVeg ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+      if (isMenstruating) {
+        dietBadge.textContent = isVeg ? '🌸 Menstruation · Veg' : '🌸 Menstruation · Non-Veg';
+        dietBadge.style.background = 'rgba(139,108,247,0.12)';
+        dietBadge.style.color = '#b794f7';
+        dietBadge.style.borderColor = 'rgba(139,108,247,0.3)';
+      } else {
+        dietBadge.textContent = isVeg ? '🌱 Vegetarian' : '🥟 Non-Vegetarian';
+        dietBadge.style.background = isVeg ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)';
+        dietBadge.style.color = isVeg ? '#10b981' : '#ef4444';
+        dietBadge.style.borderColor = isVeg ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+      }
     }
     var meals;
-    if (isYoung || isUnderweight) {
+    if (isMenstruating) {
+      meals = [
+        { name: 'Breakfast', desc: 'Iron-rich oatmeal + spinach + berries + pumpkin seeds' },
+        { name: 'Morning Snack', desc: 'Dark chocolate (70%+) + almonds + banana' },
+        { name: 'Lunch', desc: isVeg ? 'Lentil soup + quinoa + roasted beetroot + leafy greens' : 'Grilled salmon + quinoa + spinach + roasted sweet potato' },
+        { name: 'Evening Snack', desc: 'Warm turmeric milk + dates + walnuts' },
+        { name: 'Dinner', desc: isVeg ? 'Steamed veggies + brown rice + tofu + sesame seeds' : 'Chicken soup + steamed veggies + brown rice' }
+      ];
+    } else if (isYoung || isUnderweight) {
       meals = isVeg ? [
         { name: 'Breakfast', desc: 'Oatmeal + banana + peanut butter + soy milk' },
         { name: 'Morning Snack', desc: 'Fruit smoothie with plant protein powder' },
@@ -376,7 +432,9 @@
 
     // --- FOODS TO EAT (personalized + STRICT veg/non-veg split) ---
     var eat, eatLabel = $('foodsEatLabel');
-    if (isVeg) {
+    if (isMenstruating) {
+      eat = ['🥬 Spinach & Leafy Greens', '🥚 Eggs', '🐟 Fatty Fish (salmon/sardines)', '🍫 Dark Chocolate (70%+)', '🍌 Bananas', '🥜 Pumpkin Seeds & Almonds', '🫘 Lentils & Beans', '🫐 Berries', '🧀 Tofu', '🌾 Whole Grains', '🥛 Warm Turmeric Milk', '🍵 Ginger Tea'];
+    } else if (isVeg) {
       if (isUnderweight) {
         eat = ['🥚 Eggs', '🧀 Paneer', '🥜 Nuts & Butters', '🥑 Avocado', '🍌 Bananas', '🌾 Whole Grains', '🥛 Full-Fat Dairy', '🍇 Dried Fruits'];
       } else if (isSenior) {
@@ -401,21 +459,46 @@
         eat = ['🥚 Eggs', '🍗 Chicken Breast', '🐟 Fish', '🍌 Bananas', '🌾 Oats', '🍚 Brown Rice', '🍠 Sweet Potato', '🥬 Spinach', '🥜 Mixed Nuts'];
       }
     }
-    if (eatLabel) eatLabel.textContent = isVeg ? '🌱 Vegetarian Options' : '🥩 Non-Vegetarian Options';
-    var avoid = isVeg
-      ? ['🚫 Junk Food', '🚫 Sugary Drinks', '🚫 Processed Snacks', '🚫 Fried Items', '🚫 Excess Salt', '🚫 Artificial Sweeteners', '🚫 Alcohol']
-      : ['🚫 Processed Meats', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 White Bread', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Artificial Sweeteners'];
+    if (eatLabel) eatLabel.textContent = isMenstruating ? '🌸 Iron-Rich & Soothing Foods' : isVeg ? '🌱 Vegetarian Options' : '🥩 Non-Vegetarian Options';
+    var avoid;
+    if (isMenstruating) {
+      avoid = ['🚫 Excess Caffeine', '🚫 Sugary Drinks', '🚫 Fried/Oily Foods', '🚫 Spicy Food', '🚫 Alcohol', '🚫 Cold Drinks/Ice Cream', '🚫 Excess Salt (causes bloating)', '🚫 Dairy (if sensitive)'];
+    } else if (isVeg) {
+      if (isUnderweight) {
+        avoid = ['🚫 Junk Food', '🚫 Sugary Drinks', '🚫 Excess Caffeine', '🚫 Raw Salad (fill up on calories first)', '🚫 Artificial Sweeteners'];
+      } else if (isSenior) {
+        avoid = ['🚫 Excess Salt', '🚫 Sugary Drinks', '🚫 Raw Undercooked Foods', '🚫 Fried Items', '🚫 Processed Snacks', '🚫 Alcohol'];
+      } else if (isOverweightBMI) {
+        avoid = ['🚫 Sugar-Sweetened Beverages', '🚫 Fried Foods', '🚫 White Rice/Bread', '🚫 High-Sugar Fruits', '🚫 Packaged Snacks', '🚫 Alcohol', '🚫 Excess Oil'];
+      } else if (isActive) {
+        avoid = ['🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 Processed Snacks', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Artificial Sweeteners', '🚫 Trans Fats'];
+      } else {
+        avoid = ['🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 White Bread/Pasta', '🚫 Packaged Snacks', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Artificial Sweeteners'];
+      }
+    } else {
+      if (isUnderweight) {
+        avoid = ['🚫 Junk Food (empty calories)', '🚫 Sugary Drinks', '🚫 Excess Caffeine', '🚫 Lean Cuts Only (need fats)', '🚫 Artificial Sweeteners'];
+      } else if (isSenior) {
+        avoid = ['🚫 Processed Meats', '🚫 Excess Salt', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 Raw Undercooked Meats', '🚫 Alcohol'];
+      } else if (isOverweightBMI) {
+        avoid = ['🚫 Fatty Red Meats', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 White Rice/Bread', '🚫 Processed Meats (bacon,sausage)', '🚫 Alcohol', '🚫 High-Calorie Sauces'];
+      } else if (isActive) {
+        avoid = ['🚫 Processed Meats', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Trans Fats', '🚫 Artificial Sweeteners'];
+      } else {
+        avoid = ['🚫 Processed Meats', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 White Bread/Pasta', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Artificial Sweeteners'];
+      }
+    }
     var eatEl = $('foodsEat'); if (eatEl) eatEl.innerHTML = eat.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
     var avEl = $('foodsAvoid'); if (avEl) avEl.innerHTML = avoid.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
 
     // --- SLEEP SCHEDULE (personalized by age & activity) ---
     var bedHour, bedMin, wakeHour, wakeMin, bedLabel, wakeLabel, napLabel;
-    if (isActive) {
+    if (isActive && !isMenstruating) {
       bedHour = 21; bedMin = 30; wakeHour = 5; wakeMin = 30;
       bedLabel = '9:30 PM'; wakeLabel = '5:30 AM'; napLabel = '20 min after 1 PM';
-    } else if (isSenior) {
+    } else if (isSenior || isMenstruating) {
       bedHour = 21; bedMin = 0; wakeHour = 5; wakeMin = 0;
-      bedLabel = '9:00 PM'; wakeLabel = '5:00 AM'; napLabel = '30 min after 12 PM';
+      bedLabel = '9:00 PM'; wakeLabel = '5:00 AM'; napLabel = isMenstruating ? '30-45 min after 12 PM' : '30 min after 12 PM';
     } else if (isYoung) {
       bedHour = 21; bedMin = 30; wakeHour = 6; wakeMin = 30;
       bedLabel = '9:30 PM'; wakeLabel = '6:30 AM'; napLabel = 'Not needed';
@@ -429,7 +512,7 @@
     var sleep = [
       { label: 'Bedtime', time: bedLabel },
       { label: 'Wake Up', time: wakeLabel },
-      { label: 'Duration', time: '8 hours' },
+      { label: 'Duration', time: isMenstruating ? '8-9 hours' : '8 hours' },
       { label: 'Nap (optional)', time: napLabel }
     ];
     var sleepEl = $('sleepSchedule'); if (sleepEl) sleepEl.innerHTML = sleep.map(function(s) {
@@ -496,7 +579,9 @@
     function getUserContextStr() {
       var p = getUserProfile();
       if (!p) return '';
-      var ctx = 'Based on your profile (Age: ' + p.age + ', BMI: ' + p.bmi.toFixed(1) + ', Activity: ' + p.activity + '): ';
+      var ctx = 'Based on your profile (Age: ' + p.age + ', BMI: ' + p.bmi.toFixed(1) + ', Activity: ' + p.activity + ', Gender: ' + p.gender;
+      if (p.menstruation) ctx += ', Currently menstruating';
+      ctx += '): ';
       return ctx;
     }
 
@@ -795,7 +880,15 @@
             'Thanks for reaching out! While I\'m specialized in fitness and health, my knowledge spans science, technology, history, nature, psychology, and more. Rephrase your question and I\'ll give you the best answer possible!',
             'Let me help you with that! I have a broad knowledge base covering fitness science, nutrition, general science, world history, technology, nature, philosophy, and practical life advice. Just let me know what direction you\'d like to go!'
           ];
-          return fb[Math.floor(Math.random()*fb.length)]; }, qr: ['Fitness help','Science fact','History fact','Motivate me','Tell me a joke'] }
+          return fb[Math.floor(Math.random()*fb.length)]; }, qr: ['Fitness help','Science fact','History fact','Motivate me','Tell me a joke'] },
+
+        // --- MENSTRUATION / PERIOD HEALTH ---
+        menstruation: { kw: ['period','menstruat','menstrual','cramps','pms','period pain','menses','menstruation','periods','period cramps','cycle','period exercise','period workout','monthly cycle','period health'], resp: function(){
+          if (p && p.gender === 'female' && p.menstruation) {
+            return '🌸 MENSTRUATION PHASE — ACTIVE:\n\nSince you\'ve indicated you\'re currently menstruating, your plan has been adjusted with gentle exercises:\n\nRECOMMENDED EXERCISES:\n- Light Yoga (Child\'s Pose, Cat-Cow, Happy Baby)\n- Walking (15-20 min)\n- Gentle stretching\n- Deep breathing / meditation\n- Foam rolling (avoid lower back if tender)\n\nFOODS THAT HELP:\n- Iron-rich: Spinach, lentils, red meat\n- Vitamin C: Citrus, berries (helps iron absorption)\n- Omega-3: Salmon, walnuts, flax (reduces cramp intensity)\n- Magnesium: Dark chocolate, nuts, seeds\n- Warm fluids: Ginger tea, turmeric milk\n\nFOODS TO AVOID: Caffeine, excess salt, fried foods, alcohol\n\nSLEEP: Aim for 8-9 hours — your body needs extra recovery!\n\nHeavy lifting and high-intensity can wait — listen to your body.';
+          }
+          return '🌸 MENSTRUATION & EXERCISE GUIDE:\n\nYES, you can exercise during your period — and it can actually help!\n\nBEST EXERCISES DURING MENSTRUATION:\n- Walking/light cardio\n- Yoga & Pilates\n- Light stretching\n- Bodyweight strength (moderate)\n- Swimming\n\nBENEFITS: Reduced cramps, improved mood, better sleep, less fatigue\n\nFOODS TO EAT: Iron-rich foods (spinach, lentils, red meat), dark chocolate, ginger tea, warm foods\n\nFOODS TO AVOID: Caffeine (increases cramps), salty foods (bloating), fried foods\n\nGENERAL ADVICE: Days 1-2 go easy, days 3-5 you can gradually increase intensity. Listen to your body — it\'s NOT weak to take it easy during your period.';
+        }, qr: ['Light exercises','Best foods','Cramp relief','When to rest'] }
       };
 
       // --- Match input against knowledge base ---
@@ -1008,6 +1101,7 @@
       'Age: ' + p.age + '\n' +
       'Height: ' + p.height + ' cm\n' +
       'Weight: ' + p.weight + ' kg\n' +
+      'Gender: ' + p.gender + (p.menstruation ? ' (Menstruating)' : '') + '\n' +
       'Activity: ' + p.activity + '\n' +
       'BMI: ' + p.bmi.toFixed(1) + '\n' +
       'Daily Calories: ' + p.tdee + '\n' +
@@ -1047,8 +1141,13 @@
     var restoreData = {
       age: saved.age, height: saved.height, weight: saved.weight,
       gender: saved.gender, activity: saved.activity, diet: saved.diet,
+      menstruation: saved.menstruation || false,
       bmi: saved.bmi, tdee: saved.tdee
     };
+    if (saved.gender === 'female') {
+      toggleMenstruation('female');
+      if (menstruationEl && saved.menstruation) menstruationEl.checked = true;
+    }
     var heightM = saved.height / 100;
     var bmi = saved.bmi;
     var d = restoreData;

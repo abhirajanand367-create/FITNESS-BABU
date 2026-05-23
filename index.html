@@ -17,13 +17,13 @@
         <svg class="nav-logo" viewBox="0 0 400 400" width="36" height="36">
           <defs>
             <linearGradient id="ng1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#00ff88"/><stop offset="50%" stop-color="#00e676"/><stop offset="100%" stop-color="#00b4ff"/>
+              <stop offset="0%" stop-color="#00e887"/><stop offset="50%" stop-color="#00d97a"/><stop offset="100%" stop-color="#00b8ff"/>
             </linearGradient>
             <linearGradient id="ng2" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stop-color="#0a0e1a"/><stop offset="60%" stop-color="#1a1f3a"/><stop offset="100%" stop-color="#0d1225"/>
+              <stop offset="0%" stop-color="#1e2230"/><stop offset="60%" stop-color="#2d3345"/><stop offset="100%" stop-color="#262b3a"/>
             </linearGradient>
             <linearGradient id="ng3" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#00ff88"/><stop offset="100%" stop-color="#00e5ff"/>
+              <stop offset="0%" stop-color="#00e887"/><stop offset="100%" stop-color="#00b8ff"/>
             </linearGradient>
           </defs>
           <polygon points="200,12 364,100 364,300 200,388 36,300 36,100" fill="none" stroke="url(#ng1)" stroke-width="6"/>
@@ -61,14 +61,14 @@
     <div class="hero-content">
       <svg class="hero-logo" viewBox="0 0 400 400" width="90" height="90">
         <defs>
-          <linearGradient id="hg1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#00ff88"/><stop offset="50%" stop-color="#00e676"/><stop offset="100%" stop-color="#00b4ff"/>
+            <linearGradient id="hg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00e887"/><stop offset="50%" stop-color="#00d97a"/><stop offset="100%" stop-color="#00b8ff"/>
           </linearGradient>
           <linearGradient id="hg2" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stop-color="#0a0e1a"/><stop offset="60%" stop-color="#1a1f3a"/><stop offset="100%" stop-color="#0d1225"/>
+            <stop offset="0%" stop-color="#1e2230"/><stop offset="60%" stop-color="#2d3345"/><stop offset="100%" stop-color="#262b3a"/>
           </linearGradient>
           <linearGradient id="hg3" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#00ff88"/><stop offset="100%" stop-color="#00e5ff"/>
+            <stop offset="0%" stop-color="#00e887"/><stop offset="100%" stop-color="#00b8ff"/>
           </linearGradient>
           <linearGradient id="hg4" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="#2a3a5c"/><stop offset="100%" stop-color="#1a2540"/>
@@ -137,6 +137,47 @@
     </div>
   </section>
 
+  <!-- FITNESS GALLERY -->
+  <section class="section" id="gallery" style="position:relative;overflow:hidden">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Inspiration</span>
+        <h2>Your Fitness Journey Starts Here</h2>
+        <p>Every rep, every step, every drop of sweat brings you closer to your goals.</p>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80" alt="Gym workout" class="gallery-img" loading="lazy">
+          <div class="gallery-overlay">
+            <span>Strength Training</span>
+            <small>Build muscle & power</small>
+          </div>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80" alt="Running" class="gallery-img" loading="lazy">
+          <div class="gallery-overlay">
+            <span>Cardio & Running</span>
+            <small>Boost endurance & heart health</small>
+          </div>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80" alt="Yoga" class="gallery-img" loading="lazy">
+          <div class="gallery-overlay">
+            <span>Yoga & Flexibility</span>
+            <small>Find balance & peace</small>
+          </div>
+        </div>
+        <div class="gallery-card">
+          <img src="https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?w=600&q=80" alt="Healthy food" class="gallery-img" loading="lazy">
+          <div class="gallery-overlay">
+            <span>Healthy Nutrition</span>
+            <small>Fuel your body right</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- USER INPUT / ASSESSMENT -->
   <section class="section" id="assessment" style="position:relative;overflow:hidden">
     <div class="section-bg-img" style="background-image:url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1600&q=80')"></div>
@@ -158,6 +199,14 @@
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>
+            <div class="menstruation-wrap" id="menstruationWrap" style="display:none;margin-top:10px">
+              <label class="menstruation-toggle">
+                <input type="checkbox" id="menstruation">
+                <span class="toggle-slider-sm"></span>
+                <span class="menstruation-label"><i class="fas fa-venus"></i> Currently on Menstruation</span>
+              </label>
+              <p class="menstruation-hint">Special light exercise & recovery plan will be generated</p>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -322,6 +371,42 @@
     </div>
   </section>
 
+  <!-- WORKOUT STRIP -->
+  <section class="section" id="workout-strip" style="position:relative;overflow:hidden">
+    <div class="container">
+      <div class="strip-grid">
+        <div class="strip-item">
+          <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=80" alt="Push-ups" class="strip-img" loading="lazy">
+          <div class="strip-info">
+            <h4>Push-ups</h4>
+            <p>Upper body strength</p>
+          </div>
+        </div>
+        <div class="strip-item">
+          <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&q=80" alt="Squats" class="strip-img" loading="lazy">
+          <div class="strip-info">
+            <h4>Squats</h4>
+            <p>Leg day essential</p>
+          </div>
+        </div>
+        <div class="strip-item">
+          <img src="https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400&q=80" alt="Planks" class="strip-img" loading="lazy">
+          <div class="strip-info">
+            <h4>Planks</h4>
+            <p>Core stability</p>
+          </div>
+        </div>
+        <div class="strip-item">
+          <img src="https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=400&q=80" alt="Stretching" class="strip-img" loading="lazy">
+          <div class="strip-info">
+            <h4>Stretching</h4>
+            <p>Flexibility & recovery</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ACHIEVEMENTS & GAMIFICATION -->
   <section class="section" id="achievements" style="position:relative;overflow:hidden">
     <div class="section-bg-img" style="background-image:url('https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&q=80')"></div>
@@ -359,7 +444,7 @@
           <svg class="footer-logo" viewBox="0 0 400 400" width="28" height="28">
             <defs>
               <linearGradient id="fg1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#00ff88"/><stop offset="100%" stop-color="#00b4ff"/>
+                <stop offset="0%" stop-color="#00e887"/><stop offset="100%" stop-color="#00b8ff"/>
               </linearGradient>
             </defs>
             <polygon points="200,12 364,100 364,300 200,388 36,300 36,100" fill="none" stroke="url(#fg1)" stroke-width="8"/>
