@@ -284,7 +284,7 @@
     if(bp)bp.style.width=Math.min(bmi/40*100,100)+'%';if(wp)wp.style.width=Math.min(water/4*100,100)+'%';if(fp)fp.style.width=score+'%';
     animateValue(be,0,bmi,'',700);animateValue(ce,0,tdee,'',800);animateValue(we,0,water,'L',700);animateValue(fe,0,score,'',600);
     setTimeout(function(){if(bp)bp.classList.remove('shimmer');if(wp)wp.classList.remove('shimmer');if(fp)fp.classList.remove('shimmer')},1400);
-    var rl=$('riskLevel');if(rl){var rc=riskLvl==='High Risk'?'#ef4444':riskLvl==='Medium Risk'?'#f59e0b':'#10b981';rl.textContent=riskLvl;rl.style.color=rc;rl.style.border='2px solid '+rc;rl.style.background=riskLvl==='Low Risk'?'rgba(16,185,129,0.1)':riskLvl==='Medium Risk'?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.1)')}
+    var rl=$('riskLevel');if(rl){var rc=riskLvl==='High Risk'?'#ef4444':riskLvl==='Medium Risk'?'#f59e0b':'#10b981';rl.textContent=riskLvl;rl.style.color=rc;rl.style.border='2px solid '+rc;rl.style.background=riskLvl==='Low Risk'?'rgba(16,185,129,0.1)':riskLvl==='Medium Risk'?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.1)';}
     var rm=$('riskMessage');if(rm)rm.textContent=riskMsg;
     var rp=$('riskProgress');if(rp)rp.style.width=score+'%';
     generatePlan({age:o.age,height:o.height,weight:o.weight,gender:o.gender,activity:o.activity,diet:o.diet,menstruation:o.menstruation,problem:o.problem,bmi:bmi,tdee:tdee});
