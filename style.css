@@ -362,7 +362,7 @@ select option{background:var(--bg-card);color:var(--text-primary)}
 }
 .btn-primary{
   background:linear-gradient(135deg,var(--green),var(--green-dark));
-  color:#0a0e1a;box-shadow:0 4px 16px rgba(45,212,160,0.25)
+  color:#fff;box-shadow:0 4px 16px rgba(45,212,160,0.25)
 }
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(45,212,160,0.35)}
 .btn-primary:active{transform:translateY(0);box-shadow:0 2px 8px rgba(45,212,160,0.2)}
@@ -383,9 +383,9 @@ select option{background:var(--bg-card);color:var(--text-primary)}
 }
 .dash-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:var(--transition)}
 .dash-card:hover::before{opacity:1}
-.bmi-card::before{background:linear-gradient(90deg,var(--green),#00a865)}
+.bmi-card::before{background:linear-gradient(90deg,var(--green),var(--green-dark))}
 .calorie-card::before{background:linear-gradient(90deg,var(--warning),#d97706)}
-.water-card::before{background:linear-gradient(90deg,var(--blue),#0077b6)}
+.water-card::before{background:linear-gradient(90deg,var(--blue),#0284c7)}
 .fitness-card::before{background:linear-gradient(90deg,var(--purple),var(--blue))}
 .dash-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg),var(--shadow-glow)}
 .card-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:1.4rem;position:relative}
@@ -398,8 +398,8 @@ select option{background:var(--bg-card);color:var(--text-primary)}
 .card-sub{font-size:0.72rem;color:var(--text-muted);margin-top:3px}
 .progress-bar{width:100%;height:6px;background:var(--bg-secondary);border-radius:3px;margin-top:16px;overflow:hidden}
 .progress-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);width:0%}
-.bmi-fill{background:linear-gradient(90deg,var(--green),#00a865)}
-.water-fill{background:linear-gradient(90deg,var(--blue),#0077b6)}
+.bmi-fill{background:linear-gradient(90deg,var(--green),var(--green-dark))}
+.water-fill{background:linear-gradient(90deg,var(--blue),#0284c7)}
 .fitness-fill{background:linear-gradient(90deg,var(--purple),var(--blue))}
 
 /* ===== HEALTH RISK ===== */
@@ -687,8 +687,8 @@ select option{background:var(--bg-card);color:var(--text-primary)}
 }
 .message.user .msg-content{
   background:linear-gradient(135deg,var(--green),var(--green-dark));
-  color:#0a0e1a;border-bottom-right-radius:4px;font-weight:500;
-  box-shadow:0 2px 12px rgba(45,212,160,0.25)
+  color:#fff;border-bottom-right-radius:4px;font-weight:500;
+  box-shadow:0 2px 12px rgba(45,212,160,0.2)
 }
 .msg-time{
   font-size:0.6rem;color:var(--text-muted);margin-top:4px;opacity:0.7;
@@ -727,7 +727,7 @@ select option{background:var(--bg-card);color:var(--text-primary)}
 .chat-voice-btn:hover{background:rgba(231,76,60,0.15);color:var(--danger)}
 .chatbot-input>button:last-child{
   width:42px;height:42px;border-radius:50%;border:none;
-  background:linear-gradient(135deg,var(--green),var(--green-dark));color:#0a0e1a;
+  background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;
   font-size:1rem;cursor:pointer;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
   flex-shrink:0;display:flex;align-items:center;justify-content:center
 }
@@ -752,14 +752,14 @@ select option{background:var(--bg-card);color:var(--text-primary)}
 /* ===== NOTIFICATION MODAL ===== */
 .notif-modal{
   position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:fadeIn 0.3s ease
+  background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:fadeIn 0.3s ease
 }
 .notif-modal.open{display:flex}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .notif-modal-content{
   background:var(--bg-card);border-radius:24px;border:1px solid var(--border);
   width:440px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;
-  box-shadow:0 24px 80px rgba(0,0,0,0.5);animation:modalSlide 0.35s cubic-bezier(0.34,1.56,0.64,1)
+  box-shadow:0 24px 80px rgba(0,0,0,0.1);animation:modalSlide 0.35s cubic-bezier(0.34,1.56,0.64,1)
 }
 @keyframes modalSlide{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 .notif-modal-header{
@@ -791,7 +791,7 @@ select option{background:var(--bg-card);color:var(--text-primary)}
   border-radius:50%;background:var(--text-muted);transition:var(--transition)
 }
 .notif-toggle input:checked + .toggle-slider{background:var(--green)}
-.notif-toggle input:checked + .toggle-slider::after{left:23px;background:#0a0e1a}
+.notif-toggle input:checked + .toggle-slider::after{left:23px;background:#fff}
 .notif-option{
   display:flex;align-items:center;justify-content:space-between;
   padding:16px 18px;background:var(--bg-secondary);border-radius:var(--radius-sm);
