@@ -10,6 +10,9 @@
 </head>
 <body>
 
+  <!-- SCROLL PROGRESS BAR -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
   <!-- NAVIGATION -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
@@ -58,7 +61,7 @@
   <section class="hero" id="home">
     <div class="hero-bg-img" style="background-image:url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1600&q=80')"></div>
     <div class="hero-overlay"></div>
-    <div class="hero-content">
+    <div class="hero-content hero-animate">
       <svg class="hero-logo" viewBox="0 0 400 400" width="90" height="90">
         <defs>
             <linearGradient id="hg1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -121,8 +124,8 @@
       <h1 class="hero-title">Transform Your Body<br><span class="gradient-text">With FITHOMEY</span></h1>
       <p class="hero-subtitle">Your personal AI fitness coach that analyzes your health, creates custom plans, and guides you every step of the way.</p>
       <div class="hero-cta">
-        <a href="#assessment" class="btn-primary"><i class="fas fa-rocket"></i> Start Your Journey</a>
-        <a href="#plan" class="btn-secondary"><i class="fas fa-play-circle"></i> See Features</a>
+        <a href="#assessment" class="btn-primary btn-ripple"><i class="fas fa-rocket"></i> Start Your Journey</a>
+        <a href="#plan" class="btn-secondary btn-ripple"><i class="fas fa-play-circle"></i> See Features</a>
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><span class="stat-num">10K+</span><span class="stat-label">Active Users</span></div>
@@ -138,12 +141,12 @@
   </section>
 
   <!-- FITNESS GALLERY -->
-  <section class="section" id="gallery" style="position:relative;overflow:hidden">
+  <section class="section reveal" id="gallery" style="position:relative;overflow:hidden">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Inspiration</span>
-        <h2>Your Fitness Journey Starts Here</h2>
-        <p>Every rep, every step, every drop of sweat brings you closer to your goals.</p>
+        <span class="section-tag reveal reveal-delay-1">Inspiration</span>
+        <h2 class="reveal reveal-delay-2">Your Fitness Journey Starts Here</h2>
+        <p class="reveal reveal-delay-3">Every rep, every step, every drop of sweat brings you closer to your goals.</p>
       </div>
       <div class="gallery-grid">
         <div class="gallery-card">
@@ -179,13 +182,13 @@
   </section>
 
   <!-- USER INPUT / ASSESSMENT -->
-  <section class="section" id="assessment" style="position:relative;overflow:hidden">
+  <section class="section reveal reveal-delay-1" id="assessment" style="position:relative;overflow:hidden">
     <div class="section-bg-img" style="background-image:url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1600&q=80')"></div>
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Assessment</span>
-        <h2>Tell Us About Yourself</h2>
-        <p>Enter your details and let our AI analyze your fitness profile.</p>
+        <span class="section-tag reveal reveal-delay-1">Assessment</span>
+        <h2 class="reveal reveal-delay-2">Tell Us About Yourself</h2>
+        <p class="reveal reveal-delay-3">Enter your details and let our AI analyze your fitness profile.</p>
       </div>
       <div class="form-card">
         <div class="form-row">
@@ -265,6 +268,10 @@
                 <i class="fas fa-drumstick-bite"></i>
                 <span>Non-Veg</span>
               </div>
+              <div class="diet-option" data-value="both" role="button" tabindex="0">
+                <i class="fas fa-utensils"></i>
+                <span>Both</span>
+              </div>
               <div class="diet-option" data-value="veg" role="button" tabindex="0">
                 <i class="fas fa-carrot"></i>
                 <span>Vegetarian</span>
@@ -293,46 +300,50 @@
           </div>
           <input type="hidden" id="activity" value="medium">
         </div>
-        <button class="btn-primary btn-full" id="analyzeBtn"><i class="fas fa-calculator"></i> Analyze My Health</button>
+        <button class="btn-primary btn-full btn-ripple" id="analyzeBtn"><i class="fas fa-calculator"></i> Analyze My Health</button>
       </div>
     </div>
   </section>
 
   <!-- RESULTS DASHBOARD -->
-  <section class="section" id="dashboard" style="display:none;">
+  <section class="section reveal reveal-delay-2" id="dashboard" style="display:none;">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Your Results</span>
-        <h2>Fitness Analytics Dashboard</h2>
-        <p>Here's your personalized health analysis.</p>
+        <span class="section-tag reveal reveal-delay-1">Your Results</span>
+        <h2 class="reveal reveal-delay-2">Fitness Analytics Dashboard</h2>
+        <p class="reveal reveal-delay-3">Here's your personalized health analysis.</p>
       </div>
       <div class="dashboard-grid">
         <div class="dash-card bmi-card">
+          <div class="card-shine"></div>
           <div class="card-icon"><i class="fas fa-weight"></i></div>
           <div class="card-value" id="bmiValue">0</div>
           <div class="card-label">BMI</div>
           <div class="card-sub" id="bmiCategory">Normal</div>
-          <div class="progress-bar"><div class="progress-fill bmi-fill" id="bmiProgress"></div></div>
+          <div class="progress-bar"><div class="progress-fill bmi-fill shimmer" id="bmiProgress"></div></div>
         </div>
         <div class="dash-card calorie-card">
+          <div class="card-shine"></div>
           <div class="card-icon"><i class="fas fa-fire"></i></div>
           <div class="card-value" id="calorieValue">0</div>
           <div class="card-label">Daily Calories</div>
           <div class="card-sub">TDEE Estimate</div>
         </div>
         <div class="dash-card water-card">
+          <div class="card-shine"></div>
           <div class="card-icon"><i class="fas fa-tint"></i></div>
           <div class="card-value"><span id="waterValue">0</span> L</div>
           <div class="card-label">Water Intake</div>
           <div class="card-sub">Hydration Goal</div>
-          <div class="progress-bar"><div class="progress-fill water-fill" id="waterProgress"></div></div>
+          <div class="progress-bar"><div class="progress-fill water-fill shimmer" id="waterProgress"></div></div>
         </div>
         <div class="dash-card fitness-card">
+          <div class="card-shine"></div>
           <div class="card-icon"><i class="fas fa-heartbeat"></i></div>
           <div class="card-value"><span id="fitnessScore">0</span>/100</div>
           <div class="card-label">Fitness Score</div>
           <div class="card-sub" id="fitnessLevel">Good</div>
-          <div class="progress-bar"><div class="progress-fill fitness-fill" id="fitnessProgress"></div></div>
+          <div class="progress-bar"><div class="progress-fill fitness-fill shimmer" id="fitnessProgress"></div></div>
         </div>
       </div>
 
@@ -345,7 +356,7 @@
         <div class="risk-body">
           <div class="risk-level" id="riskLevel">Low Risk</div>
           <p id="riskMessage">You are in a healthy range. Keep up the good work!</p>
-          <div class="risk-bar"><div class="risk-fill" id="riskProgress"></div></div>
+          <div class="risk-bar"><div class="risk-fill shimmer" id="riskProgress"></div></div>
         </div>
       </div>
 
@@ -371,12 +382,12 @@
   </section>
 
   <!-- FITNESS PLAN -->
-  <section class="section" id="plan" style="display:none;">
+  <section class="section reveal reveal-delay-3" id="plan" style="display:none;">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Your Plan</span>
-        <h2>Personalized Fitness Plan</h2>
-        <p>Your AI-generated daily health roadmap.</p>
+        <span class="section-tag reveal reveal-delay-1">Your Plan</span>
+        <h2 class="reveal reveal-delay-2">Personalized Fitness Plan</h2>
+        <p class="reveal reveal-delay-3">Your AI-generated daily health roadmap.</p>
       </div>
       <div class="plan-tabs">
         <button class="plan-tab active" data-tab="workout"><i class="fas fa-dumbbell"></i> Workout</button>
@@ -424,7 +435,7 @@
   </section>
 
   <!-- WORKOUT STRIP -->
-  <section class="section" id="workout-strip" style="position:relative;overflow:hidden">
+  <section class="section reveal" id="workout-strip" style="position:relative;overflow:hidden">
     <div class="container">
       <div class="strip-grid">
         <div class="strip-item">
@@ -460,13 +471,13 @@
   </section>
 
   <!-- ACHIEVEMENTS & GAMIFICATION -->
-  <section class="section" id="achievements" style="position:relative;overflow:hidden">
+  <section class="section reveal reveal-delay-1" id="achievements" style="position:relative;overflow:hidden">
     <div class="section-bg-img" style="background-image:url('https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1600&q=80')"></div>
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Gamification</span>
-        <h2>Your Fitness Journey</h2>
-        <p>Track your streaks, earn badges, and take on challenges.</p>
+        <span class="section-tag reveal reveal-delay-1">Gamification</span>
+        <h2 class="reveal reveal-delay-2">Your Fitness Journey</h2>
+        <p class="reveal reveal-delay-3">Track your streaks, earn badges, and take on challenges.</p>
       </div>
       <div class="streak-card">
         <div class="streak-flame"><i class="fas fa-fire"></i></div>
@@ -489,7 +500,7 @@
   </section>
 
   <!-- FOOTER / REPORT -->
-  <footer class="footer">
+  <footer class="footer reveal reveal-delay-2">
     <div class="container">
       <div class="footer-content">
         <div class="footer-brand">
@@ -557,7 +568,7 @@
             <option value="90">90 min</option>
           </select>
         </div>
-        <button class="btn-primary btn-full" id="notifSaveBtn"><i class="fas fa-save"></i> Save Reminder Settings</button>
+        <button class="btn-primary btn-full btn-ripple" id="notifSaveBtn"><i class="fas fa-save"></i> Save Reminder Settings</button>
         <p class="notif-status" id="notifStatus"></p>
       </div>
     </div>

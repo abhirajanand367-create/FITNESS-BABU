@@ -35,6 +35,9 @@
   var navLinksList = document.querySelectorAll('.nav-links a');
   navLinksList.forEach(function(a) { a.addEventListener('click', function() { navLinks.classList.remove('open'); }); });
 
+  // ===== SCROLL PROGRESS BAR =====
+  var scrollProgress = $('scrollProgress');
+
   var sections = document.querySelectorAll('.section, .hero');
   window.addEventListener('scroll', function() {
     var current = 'home';
@@ -44,11 +47,46 @@
     navLinksList.forEach(function(a) {
       a.classList.toggle('active', a.getAttribute('href') === '#' + current);
     });
+    // Update scroll progress bar
+    if (scrollProgress) {
+      var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      var pct = Math.min(window.scrollY / maxScroll * 100, 100);
+      scrollProgress.style.width = pct + '%';
+    }
   });
+
+  // ===== BUTTON RIPPLE EFFECT =====
+  document.querySelectorAll('.btn-ripple').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      var rect = btn.getBoundingClientRect();
+      var ripple = document.createElement('span');
+      ripple.className = 'ripple-effect';
+      var size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      btn.appendChild(ripple);
+      ripple.addEventListener('animationend', function() { ripple.remove(); });
+    });
+  });
+
+  // ===== INTERSECTION OBSERVER FOR REVEAL ANIMATIONS =====
+  var revealElements = document.querySelectorAll('.reveal');
+  if (revealElements.length) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    revealElements.forEach(function(el) { observer.observe(el); });
+  }
 
   // ===== DIET SELECTOR (PRO) =====
   var dietHidden = $('dietType');
-  var dietLabels = { veg: 'Vegetarian', nonveg: 'Non-Veg' };
+  var dietLabels = { veg: 'Vegetarian', nonveg: 'Non-Veg', both: 'Mixed Diet' };
   var activeTabBeforeDietChange = null;
 
   function handleDietSelect(opt) {
@@ -221,18 +259,31 @@
 
     var fitLevel = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Average' : 'Needs Improvement';
 
-    // Update DOM
-    var bmiVal = $('bmiValue'); if (bmiVal) bmiVal.textContent = bmi.toFixed(1);
+    // Update DOM with animated counters
+    var bmiVal = $('bmiValue'); if (bmiVal) { bmiVal.textContent = '0'; var bmiTarget = bmi; }
     var bmiCatEl = $('bmiCategory'); if (bmiCatEl) bmiCatEl.textContent = bmiCat;
     var bmiProg = $('bmiProgress'); if (bmiProg) bmiProg.style.width = Math.min(bmi / 40 * 100, 100) + '%';
 
-    var calVal = $('calorieValue'); if (calVal) calVal.textContent = tdee.toLocaleString();
-    var watVal = $('waterValue'); if (watVal) watVal.textContent = water;
+    var calVal = $('calorieValue'); if (calVal) { calVal.textContent = '0'; var calTarget = tdee; }
+    var watVal = $('waterValue'); if (watVal) { watVal.textContent = '0.0'; var watTarget = water; }
     var watProg = $('waterProgress'); if (watProg) watProg.style.width = Math.min(water / 4 * 100, 100) + '%';
 
-    var fitVal = $('fitnessScore'); if (fitVal) fitVal.textContent = score;
+    var fitVal = $('fitnessScore'); if (fitVal) { fitVal.textContent = '0'; var fitTarget = score; }
     var fitLev = $('fitnessLevel'); if (fitLev) fitLev.textContent = fitLevel;
     var fitProg = $('fitnessProgress'); if (fitProg) fitProg.style.width = score + '%';
+
+    setTimeout(function() {
+      animateValue(bmiVal, 0, bmiTarget || bmi, '', 700);
+      animateValue(calVal, 0, calTarget || tdee, '', 800);
+      animateValue(watVal, 0, watTarget || water, 'L', 700);
+      animateValue(fitVal, 0, fitTarget || score, '', 600);
+    }, 150);
+    // Remove shimmer after progress animation completes
+    setTimeout(function() {
+      if (bmiProg) bmiProg.classList.remove('shimmer');
+      if (watProg) watProg.classList.remove('shimmer');
+      if (fitProg) fitProg.classList.remove('shimmer');
+    }, 1400);
 
     // Health Risk
     var riskLevel, riskMsg, riskColor, riskPct;
@@ -258,6 +309,7 @@
 
     dashboardSec.style.display = 'block';
     planSec.style.display = 'block';
+    setTimeout(function() { dashboardSec.classList.add('visible'); planSec.classList.add('visible'); }, 50);
 
     generatePlan({ age: d.age, height: d.height, weight: d.weight, gender: d.gender, activity: d.activity, diet: d.diet, menstruation: d.menstruation, problem: d.problem, bmi: bmi, tdee: tdee });
     dashboardSec.scrollIntoView({ behavior: 'smooth' });
@@ -606,86 +658,124 @@
 
     // --- MEAL PLAN ---
     var isVeg = diet === 'veg';
+    var isBoth = diet === 'both';
+    // For "both", treat as non-veg for filtering (non-veg items are allowed)
     var dietBadge = $('dietBadge');
     if (dietBadge) {
       if (isMenstruating) {
-        dietBadge.textContent = isVeg ? '🌸 Menstruation · Veg' : '🌸 Menstruation · Non-Veg';
+        dietBadge.textContent = isVeg ? '🌸 Menstruation · Veg' : '🌸 Mixed · Menstruation';
         dietBadge.style.background = 'rgba(139,108,247,0.12)';
         dietBadge.style.color = '#b794f7';
         dietBadge.style.borderColor = 'rgba(139,108,247,0.3)';
       } else if (problem !== 'general' && problemData[problem]) {
-        dietBadge.textContent = problemData[problem].label;
+        dietBadge.textContent = problemData[problem].label + (isBoth ? ' · Mixed' : '');
         dietBadge.style.background = 'rgba(0,232,135,0.08)';
         dietBadge.style.color = 'var(--green)';
         dietBadge.style.borderColor = 'rgba(0,232,135,0.3)';
       } else {
-        dietBadge.textContent = isVeg ? '🌱 Vegetarian' : '🥟 Non-Vegetarian';
-        dietBadge.style.background = isVeg ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)';
-        dietBadge.style.color = isVeg ? '#10b981' : '#ef4444';
-        dietBadge.style.borderColor = isVeg ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+        dietBadge.textContent = isVeg ? '🌱 Vegetarian' : isBoth ? '🥟 Mixed Diet' : '🥩 Non-Vegetarian';
+        dietBadge.style.background = isVeg ? 'rgba(16,185,129,0.15)' : isBoth ? 'rgba(139,108,247,0.12)' : 'rgba(239,68,68,0.12)';
+        dietBadge.style.color = isVeg ? '#10b981' : isBoth ? '#b794f7' : '#ef4444';
+        dietBadge.style.borderColor = isVeg ? 'rgba(16,185,129,0.3)' : isBoth ? 'rgba(139,108,247,0.3)' : 'rgba(239,68,68,0.3)';
       }
     }
+
+    // Variety seed for meal randomization (changes daily)
+    var varietySeed = new Date().toDateString() + (weight % 5) + (age % 7);
+    // Helper to mix veg & non-veg meals randomly for "both" diet
+    function mixMeals(vMeals, nvMeals, seed) {
+      var result = [];
+      for (var i = 0; i < vMeals.length; i++) {
+        var useVeg = (seed.charCodeAt(i % seed.length) + i * 7 + (new Date().getDate())) % 2 === 0;
+        result.push({
+          name: vMeals[i].name,
+          desc: (i % 2 === 0 ? useVeg : !useVeg) ? vMeals[i].desc : nvMeals[i].desc
+        });
+      }
+      return result;
+    }
+    // Shuffle array for variety (deterministic-ish per user)
+    function shuffleForVariety(arr, seed) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = (seed.charCodeAt(i % seed.length) + i * 13 + (userBadges.length || 0)) % (i + 1);
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
     var meals;
     if (isMenstruating) {
       meals = [
-        { name: 'Breakfast', desc: 'Iron-rich oatmeal + spinach + berries + pumpkin seeds' },
+        { name: 'Breakfast', desc: isBoth ? (new Date().getDate() % 2 === 0 ? 'Iron-rich oatmeal + spinach + berries + pumpkin seeds' : 'Scrambled eggs + spinach + whole grain toast + berries') : 'Iron-rich oatmeal + spinach + berries + pumpkin seeds' },
         { name: 'Morning Snack', desc: 'Dark chocolate (70%+) + almonds + banana' },
         { name: 'Lunch', desc: isVeg ? 'Lentil soup + quinoa + roasted beetroot + leafy greens' : 'Grilled salmon + quinoa + spinach + roasted sweet potato' },
         { name: 'Evening Snack', desc: 'Warm turmeric milk + dates + walnuts' },
         { name: 'Dinner', desc: isVeg ? 'Steamed veggies + brown rice + tofu + sesame seeds' : 'Chicken soup + steamed veggies + brown rice' }
       ];
     } else if (problem !== 'general' && problemData[problem]) {
-      meals = isVeg ? problemData[problem].meals_v : problemData[problem].meals_nv;
+      if (isBoth) {
+        meals = mixMeals(problemData[problem].meals_v, problemData[problem].meals_nv, varietySeed);
+      } else {
+        meals = isVeg ? problemData[problem].meals_v : problemData[problem].meals_nv;
+      }
     } else if (isYoung || isUnderweight) {
-      meals = isVeg ? [
+      var youngV = [
         { name: 'Breakfast', desc: 'Oatmeal + banana + peanut butter + soy milk' },
         { name: 'Morning Snack', desc: 'Fruit smoothie with plant protein powder' },
         { name: 'Lunch', desc: 'Chickpea wrap + avocado + veggies + yogurt' },
         { name: 'Evening Snack', desc: 'Trail mix + apple' },
         { name: 'Dinner', desc: 'Paneer curry + rice + mixed veggies + dal' }
-      ] : [
+      ];
+      var youngNV = [
         { name: 'Breakfast', desc: 'Whole grain cereal + milk + banana + peanut butter toast' },
         { name: 'Morning Snack', desc: 'Fruit smoothie with protein powder' },
         { name: 'Lunch', desc: 'Chicken wrap with veggies + cheese + yogurt' },
         { name: 'Evening Snack', desc: 'Trail mix + apple' },
         { name: 'Dinner', desc: 'Grilled chicken + mashed potatoes + mixed veggies' }
       ];
+      meals = isBoth ? mixMeals(youngV, youngNV, varietySeed) : isVeg ? youngV : youngNV;
     } else if (isSenior) {
-      meals = isVeg ? [
+      var seniorV = [
         { name: 'Breakfast', desc: 'Oatmeal with berries + boiled eggs (2) + toast' },
         { name: 'Morning Snack', desc: 'Banana + handful of walnuts' },
         { name: 'Lunch', desc: 'Dal + steamed veggies + small portion rice + paneer' },
         { name: 'Evening Snack', desc: 'Greek yogurt + honey' },
         { name: 'Dinner', desc: 'Light veg soup + veg salad + grilled tofu' }
-      ] : [
+      ];
+      var seniorNV = [
         { name: 'Breakfast', desc: 'Oatmeal with berries + boiled eggs (2)' },
         { name: 'Morning Snack', desc: 'Banana + handful of walnuts' },
         { name: 'Lunch', desc: 'Grilled fish + steamed veggies + small portion rice' },
         { name: 'Evening Snack', desc: 'Greek yogurt + honey' },
         { name: 'Dinner', desc: 'Light soup + grilled chicken salad' }
       ];
+      meals = isBoth ? mixMeals(seniorV, seniorNV, varietySeed) : isVeg ? seniorV : seniorNV;
     } else if (isOverweightBMI) {
-      meals = isVeg ? [
+      var owV = [
         { name: 'Breakfast', desc: 'Oatmeal with berries + green tea + sprouts' },
         { name: 'Morning Snack', desc: 'Apple with almonds (10)' },
         { name: 'Lunch', desc: 'Quinoa salad + chickpeas + cucumber + lemon dressing' },
         { name: 'Evening Snack', desc: 'Greek yogurt + chia seeds' },
         { name: 'Dinner', desc: 'Grilled tofu + broccoli + cauliflower rice + stir-fry' }
-      ] : [
+      ];
+      var owNV = [
         { name: 'Breakfast', desc: 'Oatmeal with berries + green tea' },
         { name: 'Morning Snack', desc: 'Apple with almonds (10)' },
         { name: 'Lunch', desc: 'Grilled chicken salad + quinoa + lemon dressing' },
         { name: 'Evening Snack', desc: 'Greek yogurt + chia seeds' },
         { name: 'Dinner', desc: 'Steamed fish + broccoli + cauliflower rice' }
       ];
+      meals = isBoth ? mixMeals(owV, owNV, varietySeed) : isVeg ? owV : owNV;
     } else if (isActive) {
-      meals = isVeg ? [
+      var activeV = [
         { name: 'Breakfast', desc: 'Scrambled eggs (4) + avocado toast + oats' },
         { name: 'Morning Snack', desc: 'Plant protein shake + banana + peanut butter' },
         { name: 'Lunch', desc: 'Paneer (200g) + quinoa + broccoli + bell peppers' },
         { name: 'Evening Snack', desc: 'Greek yogurt + almonds + berries' },
         { name: 'Dinner', desc: 'Tofu steak + sweet potato + grilled veggies' }
-      ] : isMale ? [
+      ];
+      var activeNV = isMale ? [
         { name: 'Breakfast', desc: 'Egg white omelette (4 eggs) + avocado + oats' },
         { name: 'Morning Snack', desc: 'Protein shake + banana + peanut butter' },
         { name: 'Lunch', desc: 'Chicken breast (200g) + brown rice + broccoli' },
@@ -698,14 +788,16 @@
         { name: 'Evening Snack', desc: 'Protein bar + apple' },
         { name: 'Dinner', desc: 'Grilled salmon + roasted veggies + small sweet potato' }
       ];
+      meals = isBoth ? mixMeals(activeV, activeNV, varietySeed) : isVeg ? activeV : activeNV;
     } else {
-      meals = isVeg ? [
+      var normalV = [
         { name: 'Breakfast', desc: 'Smoothie bowl + granola + chia seeds + almonds' },
         { name: 'Morning Snack', desc: 'Mixed nuts + banana' },
         { name: 'Lunch', desc: 'Quinoa + chickpea + paneer bowl + greens' },
         { name: 'Evening Snack', desc: 'Hummus + veggie sticks + pita' },
         { name: 'Dinner', desc: 'Vegetable stir-fry + rice + dal + salad' }
-      ] : isMale ? [
+      ];
+      var normalNV = isMale ? [
         { name: 'Breakfast', desc: 'Scrambled eggs (3) + whole grain toast + fruit' },
         { name: 'Morning Snack', desc: 'Mixed nuts (30g) + banana' },
         { name: 'Lunch', desc: 'Turkey sandwich + side salad + yogurt' },
@@ -718,6 +810,16 @@
         { name: 'Evening Snack', desc: 'Hummus + veggie sticks' },
         { name: 'Dinner', desc: 'Baked chicken + roasted veggies + small salad' }
       ];
+      meals = isBoth ? mixMeals(normalV, normalNV, varietySeed) : isVeg ? normalV : normalNV;
+    }
+
+    // Add profile-based variety to meal descriptions
+    for (var mi = 0; mi < meals.length; mi++) {
+      var dayMod = (new Date().getDate() + mi * age) % 5;
+      if (isActive && dayMod === 1) meals[mi].desc += ' (pre-workout optimized)';
+      else if (isSenior && dayMod === 2) meals[mi].desc += ' (easy-to-digest)';
+      else if (isUnderweight && dayMod === 3) meals[mi].desc += ' (calorie-dense)';
+      else if (isOverweightBMI && dayMod === 4) meals[mi].desc += ' (low-calorie)';
     }
     var mealEl = $('mealPlan'); if (mealEl) mealEl.innerHTML = meals.map(function(m) {
       return '<div class="meal-item"><div class="meal-name">' + m.name + '</div><div class="meal-desc">' + m.desc + '</div></div>';
@@ -725,15 +827,18 @@
 
     // --- FOODS TO EAT (personalized by profile + condition) ---
     var eat, eatLabel = $('foodsEatLabel');
-    var foodOpts = { isVeg: isVeg, isUnderweight: isUnderweight, isOverweightBMI: isOverweightBMI, isSenior: isSenior, isActive: isActive, isLow: isLow, isYoung: isYoung };
+    var foodOpts = { isVeg: isVeg, isBoth: isBoth, isUnderweight: isUnderweight, isOverweightBMI: isOverweightBMI, isSenior: isSenior, isActive: isActive, isLow: isLow, isYoung: isYoung };
 
     function personalizeFoods(baseEat, baseAvoid, o) {
       var e = baseEat.slice(), a = baseAvoid.slice();
       var nvIndicators = ['🐟','🥩','🍗'];
       if (o.isVeg) {
-        e = e.filter(function(x){ return nvIndicators.every(function(n){ return x.indexOf(n)===-1; }); });
+        e = e.filter(function(x){ return nvIndicators.every(function(n){ return x.indexOf(n)===-1); }); });
         ['🧀 Paneer','🫘 Tofu','🌱 Plant Protein','🥛 Greek Yogurt'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); });
-        a = a.filter(function(x){ return nvIndicators.every(function(n){ return x.indexOf(n)===-1; }); });
+        a = a.filter(function(x){ return nvIndicators.every(function(n){ return x.indexOf(n)===-1); }); });
+      } else if (o.isBoth) {
+        // Keep all items (veg + non-veg), add extras from both categories
+        ['🧀 Paneer','🫘 Tofu','🥛 Greek Yogurt','🥚 Eggs','🍗 Chicken Breast','🐟 Fish'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); });
       } else {
         ['🥚 Eggs','🍗 Chicken Breast','🐟 Fish'].forEach(function(f){ if(e.indexOf(f)===-1) e.push(f); });
       }
@@ -770,6 +875,19 @@
       } else {
         eat = ['🥚 Eggs', '🧀 Paneer', '🍌 Bananas', '🌾 Oats', '🍚 Brown Rice', '🍠 Sweet Potato', '🥬 Spinach', '🥜 Mixed Nuts', '🫘 Lentils'];
       }
+    } else if (isBoth) {
+      // Merge veg + non-veg options for "both" diet
+      if (isUnderweight) {
+        eat = ['🥚 Eggs', '🧀 Paneer', '🍗 Chicken Breast', '🥜 Nuts & Butters', '🥑 Avocado', '🍌 Bananas', '🌾 Whole Grains', '🥛 Full-Fat Dairy', '🍇 Dried Fruits', '🥩 Red Meat', '🐟 Fish'];
+      } else if (isSenior) {
+        eat = ['🥬 Leafy Greens', '🥚 Eggs', '🍗 Lean Chicken', '🐟 Fatty Fish', '🫐 Berries', '🥜 Nuts', '🌾 Whole Grains', '🥛 Greek Yogurt', '🧀 Tofu', '🫒 Olive Oil'];
+      } else if (isOverweightBMI) {
+        eat = ['🥬 Leafy Greens', '🍗 Lean Chicken', '🐟 Fish', '🫐 Berries', '🥜 Nuts (limited)', '🌾 Quinoa', '🍵 Green Tea', '🥦 Cruciferous Veggies', '🌱 Sprouts', '🧀 Paneer'];
+      } else if (isActive) {
+        eat = ['🥚 Eggs', '🍗 Chicken Breast', '🥩 Lean Steak', '🐟 Fish', '🥛 Greek Yogurt', '🍌 Bananas', '🌾 Oats', '🍚 Brown Rice', '🍠 Sweet Potato', '🥬 Spinach'];
+      } else {
+        eat = ['🥚 Eggs', '🍗 Chicken Breast', '🐟 Fish', '🧀 Paneer', '🍌 Bananas', '🌾 Oats', '🍚 Brown Rice', '🍠 Sweet Potato', '🥬 Spinach', '🥜 Mixed Nuts', '🫘 Lentils'];
+      }
     } else {
       if (isUnderweight) {
         eat = ['🥚 Eggs', '🥩 Red Meat', '🥜 Nuts & Butters', '🥑 Avocado', '🍌 Bananas', '🌾 Whole Grains', '🥛 Full-Fat Dairy', '🍗 Chicken'];
@@ -783,7 +901,7 @@
         eat = ['🥚 Eggs', '🍗 Chicken Breast', '🐟 Fish', '🍌 Bananas', '🌾 Oats', '🍚 Brown Rice', '🍠 Sweet Potato', '🥬 Spinach', '🥜 Mixed Nuts'];
       }
     }
-    if (eatLabel) eatLabel.textContent = isMenstruating ? '🌸 Iron-Rich & Soothing Foods' : (problem !== 'general' && problemData[problem]) ? '🎯 Targeted Nutrition' : isVeg ? '🌱 Vegetarian Options' : '🥩 Non-Vegetarian Options';
+    if (eatLabel) eatLabel.textContent = isMenstruating ? '🌸 Iron-Rich & Soothing Foods' : (problem !== 'general' && problemData[problem]) ? '🎯 Targeted Nutrition' : isVeg ? '🌱 Vegetarian Options' : isBoth ? '🥟 Mixed Diet Options' : '🥩 Non-Vegetarian Options';
 
     // --- FOODS TO AVOID (personalized) ---
     var avoid;
@@ -803,6 +921,18 @@
       } else {
         avoid = ['🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 White Bread/Pasta', '🚫 Packaged Snacks', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Artificial Sweeteners'];
       }
+    } else if (isBoth) {
+      if (isUnderweight) {
+        avoid = ['🚫 Junk Food (empty calories)', '🚫 Sugary Drinks', '🚫 Excess Caffeine', '🚫 Artificial Sweeteners'];
+      } else if (isSenior) {
+        avoid = ['🚫 Processed Meats', '🚫 Excess Salt', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 Raw Undercooked Foods', '🚫 Alcohol'];
+      } else if (isOverweightBMI) {
+        avoid = ['🚫 Fatty Red Meats', '🚫 Sugar-Sweetened Beverages', '🚫 Fried Foods', '🚫 White Rice/Bread', '🚫 Processed Meats', '🚫 Alcohol', '🚫 Excess Oil'];
+      } else if (isActive) {
+        avoid = ['🚫 Processed Meats', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Trans Fats', '🚫 Artificial Sweeteners'];
+      } else {
+        avoid = ['🚫 Processed Meats', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 White Bread/Pasta', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Artificial Sweeteners'];
+      }
     } else {
       if (isUnderweight) {
         avoid = ['🚫 Junk Food (empty calories)', '🚫 Sugary Drinks', '🚫 Excess Caffeine', '🚫 Lean Cuts Only (need fats)', '🚫 Artificial Sweeteners'];
@@ -816,8 +946,11 @@
         avoid = ['🚫 Processed Meats', '🚫 Sugary Drinks', '🚫 Fried Foods', '🚫 White Bread/Pasta', '🚫 Excess Salt', '🚫 Alcohol', '🚫 Artificial Sweeteners'];
       }
     }
-    var eatEl = $('foodsEat'); if (eatEl) eatEl.innerHTML = eat.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
-    var avEl = $('foodsAvoid'); if (avEl) avEl.innerHTML = avoid.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
+    // Shuffle food order for variety (different every time)
+    var shuffledEat = eat.slice().sort(function(){ return (varietySeed.charCodeAt(0) + new Date().getMilliseconds()) % 3 - 1; });
+    var shuffledAvoid = avoid.slice().sort(function(){ return (varietySeed.charCodeAt(1) + new Date().getMilliseconds()) % 3 - 1; });
+    var eatEl = $('foodsEat'); if (eatEl) eatEl.innerHTML = shuffledEat.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
+    var avEl = $('foodsAvoid'); if (avEl) avEl.innerHTML = shuffledAvoid.map(function(f) { return '<span class="food-tag">' + f + '</span>'; }).join('');
 
     // --- SLEEP SCHEDULE (personalized) ---
     var bedHour, bedMin, wakeHour, wakeMin, bedLabel, wakeLabel, napLabel, durLabel;
@@ -1569,6 +1702,7 @@
   if (saved) {
     dashboardSec.style.display = 'block';
     planSec.style.display = 'block';
+    setTimeout(function() { dashboardSec.classList.add('visible'); planSec.classList.add('visible'); }, 50);
     // Restore diet selector UI to match saved preference
     if (saved.diet) {
       dietHidden.value = saved.diet;
@@ -1602,15 +1736,26 @@
     var water = Math.round(saved.weight * 0.033 * 10) / 10;
     var score = saved.score || 50;
     var fitLevel = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Average' : 'Needs Improvement';
-    var bmiVal = $('bmiValue'); if (bmiVal) bmiVal.textContent = bmi.toFixed(1);
+    var bmiVal = $('bmiValue'); if (bmiVal) { bmiVal.textContent = '0'; }
     var bmiCatEl = $('bmiCategory'); if (bmiCatEl) bmiCatEl.textContent = bmiCat;
     var bmiProg = $('bmiProgress'); if (bmiProg) bmiProg.style.width = Math.min(bmi / 40 * 100, 100) + '%';
-    var calVal = $('calorieValue'); if (calVal) calVal.textContent = saved.tdee.toLocaleString();
-    var watVal = $('waterValue'); if (watVal) watVal.textContent = water;
+    var calVal = $('calorieValue'); if (calVal) { calVal.textContent = '0'; }
+    var watVal = $('waterValue'); if (watVal) { watVal.textContent = '0.0'; }
     var watProg = $('waterProgress'); if (watProg) watProg.style.width = Math.min(water / 4 * 100, 100) + '%';
-    var fitVal = $('fitnessScore'); if (fitVal) fitVal.textContent = score;
+    var fitVal = $('fitnessScore'); if (fitVal) { fitVal.textContent = '0'; }
     var fitLev = $('fitnessLevel'); if (fitLev) fitLev.textContent = fitLevel;
     var fitProg = $('fitnessProgress'); if (fitProg) fitProg.style.width = score + '%';
+    setTimeout(function() {
+      animateValue(bmiVal, 0, bmi, '', 700);
+      animateValue(calVal, 0, saved.tdee, '', 800);
+      animateValue(watVal, 0, water, 'L', 700);
+      animateValue(fitVal, 0, score, '', 600);
+    }, 150);
+    setTimeout(function() {
+      if (bmiProg) bmiProg.classList.remove('shimmer');
+      if (watProg) watProg.classList.remove('shimmer');
+      if (fitProg) fitProg.classList.remove('shimmer');
+    }, 1400);
     var riskEl = $('riskLevel');
     if (riskEl) {
       var riskLevel = saved.riskLevel || 'Low Risk';
@@ -1772,6 +1917,32 @@
   var initialSettings = safeJSON('fithomey_notif_settings', { notifsEnabled: false });
   if (initialSettings.notifsEnabled) {
     requestNotifPermission();
+  }
+
+  // ===== COUNTER ANIMATION UTILITY =====
+  function animateValue(el, start, end, suffix, duration) {
+    if (!el) return;
+    suffix = suffix || '';
+    duration = duration || 800;
+    var startTime = null;
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = start + (end - start) * eased;
+      el.textContent = (end % 1 === 0 ? Math.round(current) : current.toFixed(1)) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function animateCounters(bmiVal, calVal, watVal, fitVal, bmi, tdee, water, score) {
+    setTimeout(function() {
+      animateValue(bmiVal, 0, bmi, '', 700);
+      animateValue(calVal, 0, tdee, '', 800);
+      animateValue(watVal, 0, water, 'L', 700);
+      animateValue(fitVal, 0, score, '', 600);
+    }, 100);
   }
 
 })();
