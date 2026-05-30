@@ -57,6 +57,18 @@
     </div>
   </nav>
 
+  <!-- FLOATING BACKGROUND PARTICLES -->
+  <div class="bg-particles">
+    <div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+  </div>
+
   <!-- HERO / LANDING -->
   <section class="hero" id="home">
     <div class="hero-bg-img" style="background-image:url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1600&q=80')"></div>
@@ -605,6 +617,24 @@
   <button class="scroll-top" id="scrollTopBtn" aria-label="Scroll to top">
     <i class="fas fa-chevron-up"></i>
   </button>
+
+  <!-- NAME GREETING MODAL -->
+  <div class="greeting-overlay" id="greetingOverlay">
+    <div class="greeting-modal">
+      <div class="greeting-icon"><i class="fas fa-heart"></i></div>
+      <h2 class="greeting-title">Welcome to FITHOMEY!</h2>
+      <p class="greeting-sub">Before we begin, tell us your name</p>
+      <input class="greeting-input" id="nameInput" type="text" placeholder="Enter your name..." maxlength="30" autocomplete="off">
+      <button class="greeting-btn" id="greetingBtn"><i class="fas fa-arrow-right"></i> Start</button>
+      <div class="greeting-skip" id="greetingSkip">Skip, let me explore</div>
+    </div>
+  </div>
+
+  <!-- NAME GREETING TOAST -->
+  <div class="greeting-toast" id="greetingToast">
+    <i class="fas fa-heart greeting-toast-icon"></i>
+    <span id="greetingMessage"></span>
+  </div>
 
   <script src="script.js"></script>
 </body>

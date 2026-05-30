@@ -30,6 +30,59 @@
   var downloadBtn = $('downloadReport');
   var shareBtn = $('shareBtn');
 
+  // ===== GREETING MODAL =====
+  var greetingOverlay = $('greetingOverlay');
+  var nameInput = $('nameInput');
+  var greetingBtn = $('greetingBtn');
+  var greetingSkip = $('greetingSkip');
+  var greetingToast = $('greetingToast');
+  var greetingMessage = $('greetingMessage');
+  var greetingNames = ['Champion','Warrior','Athlete','Star','Legend','Hero','Rockstar','Beast','Pro','Phenom'];
+
+  function showGreeting(name) {
+    var toast = greetingToast;
+    var msg = greetingMessage;
+    var tag = greetingNames[Math.floor(Math.random() * greetingNames.length)];
+    var phrases = [
+      'Hey, ' + name + '! Stay fit with FITHOMEY! ' + (Math.random() > 0.5 ? '🏋️' : '💪'),
+      'Welcome, ' + name + '! Time to crush those goals! 🔥',
+      'Hey ' + name + ', let\'s get stronger together! 💪',
+      'What\'s up, ' + name + '? FITHOMEY is your fitness buddy! 🚀',
+      'Hey ' + name + ', you\'re a ' + tag + '! Let\'s go! ⚡'
+    ];
+    msg.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 4500);
+  }
+
+  function handleGreeting() {
+    var name = nameInput.value.trim();
+    if (name.length > 0) {
+      safeSet('fithomey_name', name);
+      greetingOverlay.classList.add('hidden');
+      setTimeout(function() { showGreeting(name); }, 300);
+    } else {
+      nameInput.style.borderColor = 'var(--danger)';
+      nameInput.placeholder = 'Please enter your name!';
+      nameInput.classList.add('shake');
+      setTimeout(function() { nameInput.classList.remove('shake'); }, 400);
+    }
+  }
+
+  var savedName = safeGet('fithomey_name', '');
+  if (savedName) {
+    greetingOverlay.classList.add('hidden');
+    setTimeout(function() { showGreeting(savedName); }, 600);
+  } else {
+    nameInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleGreeting(); });
+    greetingBtn && greetingBtn.addEventListener('click', handleGreeting);
+    greetingSkip && greetingSkip.addEventListener('click', function() {
+      greetingOverlay.classList.add('hidden');
+    });
+    // Focus input on load
+    setTimeout(function() { if (nameInput) nameInput.focus(); }, 500);
+  }
+
   // ===== PAGE-LOAD ENTRANCE =====
   window.addEventListener('load', function() {
     document.querySelector('.navbar').style.animation = 'slideDown 0.5s cubic-bezier(0.34,1.56,0.64,1) both';
@@ -662,20 +715,37 @@
       }
     };
 
-    // ===== EXERCISE GIF MAP =====
+    // ===== EXERCISE GIF MAP (HIGH QUALITY GIPHY IDs) =====
     var gifMap = {
-      'jumping jacks':'RgtuKqJ8rPII4qdRjp','high knees':'PSn1x0R2Hqg3kComAK','burpees':'KxuGSIZU1QZfRiRx4h','mountain climbers':'VzlPEkuoqlgjehxvxk','plank jacks':'SJWtWnRFsTiNVSECVP','bicycle crunches':'oVdkHpQifYD5BQYpFK','squat jumps':'xUA7b7eul73i4xfzP2','push-ups':'5NW0ZOZT2LyY9YPay4','lunges':'McCvW7U8BX3QB3PXAg','walking lunges':'xT0xeD7gan8YgJWbwk','tuck jumps':'3o6EhPQ79zytoRdB9m','box jumps':'1cwHYKZHaqdkDCexmM','flutter kicks':'cI9PSDuenPWiAgSKeN','heisman shuffle':'VAW6QUfFPs3atM4Tfw','speed skaters':'eMxJsG1LAljDZ30JsS','plank with shoulder taps':'8rBSSKtPAq4qayRV2R','bodyweight squats':'r0WOepedKqxNjS3zM0','glute bridges':'7EeEk7QIUVKbV5RWzn','crunches':'TMNCtgJGJnV8k','calf raises':'XEDNpGzZ8IXhBRqfwS','diamond push-ups':'srOogZJmCOFkymR1jo','step-ups':'GCfe8FEQQ3akJ5REmL','tricep dips':'562vRn4PXFkm8EcJwb','wall sit':'wiRXDJkS5rcMQ2oSJG','incline push-ups':'MZuko9ynczcnmms70g','chair dips':'ojAEX7tsnRTsg6EY1O','brisk walking':'idLmS5DVmSPh6wHg64','plank':'CLjw2mHysNEYw','standing calf raises':'vyRlKcBaxQ2y9Lz1MS','seated leg raises':'1FsjYEOIEXQTosCu9T','wall push-ups':'TxSCql3N1RYDSJmXsJ','marching in place':'lSPsP2wU1GyImjFkcN','heel raises':'vyRlKcBaxQ2y9Lz1MS','cat-cow stretch':'fXtFCiwt9JNEfPqTzf','arm circles':'z0JWDAyS0hJsjrDxuV','knee push-ups':'cVSWGfQhD2T8WmNTek','side leg raises':'WRjJy7B19Tint5tUqB','yoga flow':'7rUbZWomwdhWmQVWoY','child\'s pose':'MZpWm4Z9XQWbwVMGky','seated twist':'heSg6nPS3UHVzWGuxP','butterfly stretch':'Ld6CUI3vZMYibdvD8t','bird dog':'3o7TKUtNvbq1puN65W','side plank':'PmXe3jP2CHqJyFwEHm','cobra stretch':'Z3uwVAFDiEAcWMP7vw','donkey kicks':'zsiBpbozNyn2RihxzW','bulgarian split squats':'3mgBYwj3yju1Uqd4R6','pistol squats':'ayySCHL3QGtUpYEPJD','archer push-ups':'1de6rGOlBQAE5E2V5o','single-leg deadlift':'RILEhMJUV5kovP6ffi','dragon flags':'s0sMRBJcrYavt7qloH','jump lunges':'sz2uAAG1KGsYvkHYUI','clapping push-ups':'HH6d8MPCatIDIF2OLA','l-sit hold':'59DLVjZKtAqQZI0UTG','squat pulses':'P6Q7qAdAbrlXTJ488T','push-up hold':'61luzjYFmQyHTO822Y','tabletop rows':'dT4aimDfMS5sDh7uG4','superman hold':'hNng9AOyUHxvPiCUiv','bridge pose':'XuD3044h1SvgGXyYLq','wall angels':'KxsUEz603HDEx347x7','dead hang':'t6G4bFfrm2buzRLAT9','spinal twist':'QVm4ZZw8cCsjVYfJFY','standing side bends':'Wwn5NKv4At2CIc8XQa','seated forward fold':'2tVKdyhY1v7oY','happy baby pose':'HDeOMFNTx8LPfWAxEZ','supine twist':'u44fSKx3ZcW5Rz3UWP','knee-to-chest':'ChVvEpz62GOA1y79Ij','corpse pose':'SYLAi0s9cD2wQFYlfp','gentle hip circles':'BWvrfSGW1zgdkaHpnW','sphinx pose':'w3pp6wiVIXE0o','supine hamstring stretch':'wykGOmmbcMUoQ8wW5X','pelvic tilts':'7r0zNF9WglVqtVDfTV','seated spinal twist':'Cs9EvHTM4EHz1uulmv','standing forward bend':'8Soaa1LE7A4bPec3JR','side bends':'HwFdMdIGm0hk7k13jn','foam rolling':'xT1R9URsjHLFAuPrW0','legs-up-the-wall':'e7JPrne4koRdBXzFnW','mountain pose':'9Dm0f5dEtra3a5ginX','treadmill':'ejJdy1TALOfh0mu09I','deadlift':'qNj41KxhsoiQ0','leg press':'xT6wBg4cxNkf6','lat pulldown':'JZeYUA1uJCzXcR30IS','cable row':'giKmFZqdd3YEuJYIuW','dumbbell bench press':'D1MI5cm31xkGS5aHMB','hiit finisher':'ilkluSJhjgYitwQL7P','cable crunch':'0q2SfWNBGimPQdeOYg','battle ropes':'HlOlONJ0V30l7nBiAm','kettlebell swings':'3oEjHHYOTZeHjzLLOg','farmers walk':'3oKIPz1pK2Mg42bUk0','rowing machine':'26DMTbM0OAxbdPiYo','bench press':'h24Y1pZIGKXzG','barbell row':'RYqGuMl33SK9WIl0TD','overhead press':'SieD4F7finpC5Bdal5','pull-ups':'14xa1F3aatkNhK','bicep curls':'GbWf0u65MHCIU','dumbbell fly':'zBvSThvnE0Cj2ikfTC','tricep pushdown':'orZ35jCdlD8VkSb30U','face pulls':'vw6cHB4JBg2BV7XqPA','hammer curls':'EWfDfF3QuN8qonE6Gu','chest fly':'c46jqZMonizaOsJqjW','shrugs':'ma7VlDSlty3EA','squats':'VlSzI3FVJWVmE','seated cable row':'0mhHK2Tkcxxf2mwaR6','chest press machine':'z1Suqc2f0GCPReDgUB','stationary bike':'gk32Uq0C1CnLDDj2XT','elliptical':'aDJk6E9nfixXKCn8Np','hip abductor':'kgsmPlBO8mC477wOGr','shoulder press machine':'gIxeFoOB3xBEeviCn8','seated leg curl':'xZGFptusyerP3GETnz','back extension':'VPByqa8IPNAZm26neB','hip thrust':'DgzKulDIBDc88','dumbbell shoulder press':'beghpIfkKFCVUojc7E','glute kickbacks':'DVGuSkMqsyTW76ignD','seated chest press':'z1Suqc2f0GCPReDgUB','cable bicep curl':'e2FAiqJcnGgEwjNSJJ','goblet squats':'LmTL0l4HaERFJlEVnz','dumbbell rdl':'uLEIRpuHd1GJnbkz6S','leg extension':'rnvGRog1qklLALH9F8','stair climber':'Y050ILs8pXZjW','seated dip machine':'aTNrgrhh2TUMQ002EV','incline bench':'jLFMDwtmRBrTQVVIDH','weighted dips':'mIQLVtum2WW56uuOmH','front squat':'O1TWaCoEj6lwuWtvo2','pendlay row':'H2dmCtNyFoJZS','clean press':'pQ5qPAB60piUl8yWD6','rack pulls':'l0HlCqV35hdEg2GUo','chin-ups':'YOpsFZl8opCY7ogNs5','romanian deadlift':'1wmbkQCVu8Olnq4fmE','cable kickbacks':'K25PVRA032Ues','lateral raises':'rmlERmsODCF0l13Sqe','dumbbell lunges':'l3V0h4JTNhK8rzV6g','cable pullovers':'K25PVRA032Ues','hanging leg raises':'1FsjYEOIEXQTosCu9T','assisted pull-ups':'wYBE0UtaMjZDGfGcJv','kettlebell swing':'2mIVelSCJhznbkHzFq','seated calf raise':'E0ubpVelrEv5e0Maru','leg curl machine':'DJaIIKd3KLM4NfLaFn','dumbbell row':'3oEjHM9hzerMdVjYWI','cable crossovers':'iBaNPEji5eYCJMDe4b','dumbbell press':'3oEjHM9hzerMdVjYWI','hip abductor machine':'kgsmPlBO8mC477wOGr','hip adductor':'kgsmPlBO8mC477wOGr','light walking':'idLmS5DVmSPh6wHg64','light deadlifts':'qNj41KxhsoiQ0','light dumbbell press':'beghpIfkKFCVUojc7E','dead hang from pull-up bar':'t6G4bFfrm2buzRLAT9'
+      'jumping jacks':'Io0dYFnSJbQ9S','high knees':'z6kYryKTMm8Dq','burpees':'Fm0PJWfYb7yGQ','mountain climbers':'3og0IMRZ5wWOzGH4NW','plank jacks':'8LQRKF2GqXGUC','bicycle crunches':'bSCV41t10bXjO','squat jumps':'xUA7b7eul73i4xfzP2','push ups':'5NW0ZOZT2LyY9YPay4','push-ups':'5NW0ZOZT2LyY9YPay4','press ups':'5NW0ZOZT2LyY9YPay4','lunges':'xT0xeD7gan8YgJWbwk','walking lunges':'xT0xeD7gan8YgJWbwk','tuck jumps':'3o6EhPQ79zytoRdB9m','box jumps':'1cwHYKZHaqdkDCexmM','flutter kicks':'cI9PSDuenPWiAgSKeN','speed skaters':'eMxJsG1LAljDZ30JsS','shoulder taps':'8rBSSKtPAq4qayRV2R','bodyweight squats':'r0WOepedKqxNjS3zM0','squats':'r0WOepedKqxNjS3zM0','glute bridges':'7EeEk7QIUVKbV5RWzn','crunches':'TMNCtgJGJnV8k','calf raises':'XEDNpGzZ8IXhBRqfwS','diamond push ups':'srOogZJmCOFkymR1jo','diamond push-ups':'srOogZJmCOFkymR1jo','step ups':'GCfe8FEQQ3akJ5REmL','step-ups':'GCfe8FEQQ3akJ5REmL','tricep dips':'562vRn4PXFkm8EcJwb','wall sit':'wiRXDJkS5rcMQ2oSJG','incline push ups':'MZuko9ynczcnmms70g','incline push-ups':'MZuko9ynczcnmms70g','chair dips':'ojAEX7tsnRTsg6EY1O','brisk walking':'idLmS5DVmSPh6wHg64','walking':'idLmS5DVmSPh6wHg64','plank':'CLjw2mHysNEYw','standing calf raises':'vyRlKcBaxQ2y9Lz1MS','leg raises':'1FsjYEOIEXQTosCu9T','wall push ups':'TxSCql3N1RYDSJmXsJ','wall push-ups':'TxSCql3N1RYDSJmXsJ','marching':'lSPsP2wU1GyImjFkcN','cat cow':'fXtFCiwt9JNEfPqTzf','arm circles':'z0JWDAyS0hJsjrDxuV','knee push ups':'cVSWGfQhD2T8WmNTek','knee push-ups':'cVSWGfQhD2T8WmNTek','side leg raises':'WRjJy7B19Tint5tUqB','yoga':'7rUbZWomwdhWmQVWoY','childs pose':'MZpWm4Z9XQWbwVMGky','seated twist':'heSg6nPS3UHVzWGuxP','butterfly stretch':'Ld6CUI3vZMYibdvD8t','bird dog':'3o7TKUtNvbq1puN65W','side plank':'PmXe3jP2CHqJyFwEHm','cobra stretch':'Z3uwVAFDiEAcWMP7vw','donkey kicks':'zsiBpbozNyn2RihxzW','split squats':'3mgBYwj3yju1Uqd4R6','pistol squats':'ayySCHL3QGtUpYEPJD','single leg deadlift':'RILEhMJUV5kovP6ffi','dragon flags':'s0sMRBJcrYavt7qloH','jump lunges':'sz2uAAG1KGsYvkHYUI','clapping push ups':'HH6d8MPCatIDIF2OLA','clapping push-ups':'HH6d8MPCatIDIF2OLA','l sit':'59DLVjZKtAqQZI0UTG','squat pulses':'P6Q7qAdAbrlXTJ488T','push up hold':'aeSBuNfNiqIEE','running':'YHkUwFtzfRBvq','jogging':'YHkUwFtzfRBvq','stretching':'fXtFCiwt9JNEfPqTzf','hamstring stretch':'fxtNFqQcXoVXO','quad stretch':'UHx8yrIJ5lB4M','hip flexor stretch':'l3vR6JhB4mSXM','neck roll':'3ohhwCbFMGhXq3lMC','wrist circles':'1o3BzWKKbVrTi','ankle rotations':'1o3BzWKKbVrTi','deep breathing':'3o7abKhC1wBzViCJe','meditation':'nXxOjHkR0Obd6','foam rolling':'kJYiDmmQLFxvS','dead bugs':'3wypjv3RwAvaB3ARH','hollow hold':'3og0IMRZ5wWOzGH4NW','hollow body hold':'3og0IMRZ5wWOzGH4NW','v ups':'a90hYNHNIMzni','v-ups':'a90hYNHNIMzni','reverse crunches':'3og0IP1wqLHOmP4vq','toe touches':'xUA7a1ShGogblGHD4O','windshield wipers':'3o7btMPzJrsdyWVHeo','scissors kicks':'cI9PSDuenPWiAgSKeN','pike push ups':'d3fK0Bo1xVzFS','pike push-ups':'d3fK0Bo1xVzFS','handstand hold':'l0HlNaQ6gW8dcK4Lm','handstand push ups':'l0HlNaQ6gW8dcK4Lm','pull ups':'3o7btQK1MKYhCBTiUQ','pull-ups':'3o7btQK1MKYhCBTiUQ','chin ups':'3o7btQK1MKYhCBTiUQ','chin-ups':'3o7btQK1MKYhCBTiUQ','rows':'3otPoEQr9f0MHHWW7a','bent over rows':'3otPoEQr9f0MHHWW7a','deadlifts':'wUz1YF0gU1MKY','deadlift':'wUz1YF0gU1MKY','bicep curls':'3ohzdIuqJkPDx1tyGQ','hammer curls':'3ohzdIuqJkPDx1tyGQ','shoulder press':'xUOwG6qM9m7a8','overhead press':'xUOwG6qM9m7a8','lateral raises':'l46Cy1tRZwSxwJw7O','front raises':'l46Cy1tRZwSxwJw7O','tricep extensions':'l0HlNQ7dx3s7LxX72','tricep pushdowns':'l0HlNQ7dx3s7LxX72','bench press':'3o7btQK1MKYhCBTiUQ','dumbbell press':'3o7btQK1MKYhCBTiUQ','chest fly':'3otPoEQr9f0MHHWW7a','dumbbell fly':'3otPoEQr9f0MHHWW7a','jump rope':'l0HlOBE5uXbLJN1Pq','skipping':'l0HlOBE5uXbLJN1Pq','burpee':'Fm0PJWfYb7yGQ','mountain climber':'3og0IMRZ5wWOzGH4NW','plank jacks':'SJWtWnRFsTiNVSECVP','heisman':'VAW6QUfFPs3atM4Tfw','ski jumps':'W6sMJMrNHNq8I','ice skaters':'eMxJsG1LAljDZ30JsS','lateral shuffles':'eMxJsG1LAljDZ30JsS','high knees running':'z6kYryKTMm8Dq','spot jogging':'lSPsP2wU1GyImjFkcN','stair climbing':'GCfe8FEQQ3akJ5REmL','stepmill':'GCfe8FEQQ3akJ5REmL','cycling':'eoPWA3z1MZmGQ','bike':'eoPWA3z1MZmGQ','swimming':'3o7btQK1MKYhCBTiUQ','dancing':'l3v0lsI2YrMmL3t7G','zumba':'l3v0lsI2YrMmL3t7G','hiit':'Fm0PJWfYb7yGQ','tabata':'Fm0PJWfYb7yGQ','cardio':'RgtuKqJ8rPII4qdRjp','warm up':'z0JWDAyS0hJsjrDxuV','cool down':'fXtFCiwt9JNEfPqTzf','foam roll':'kJYiDmmQLFxvS','massage':'kJYiDmmQLFxvS','glute bridge':'7EeEk7QIUVKbV5RWzn','hip thrusts':'7EeEk7QIUVKbV5RWzn','clamshells':'PmXe3jP2CHqJyFwEHm','fire hydrants':'zsiBpbozNyn2RihxzW','donkey kick':'zsiBpbozNyn2RihxzW','straight leg raises':'1FsjYEOIEXQTosCu9T','lying leg raises':'1FsjYEOIEXQTosCu9T','captain chair leg raises':'1FsjYEOIEXQTosCu9T','russian twists':'3o7btMPzJrsdyWVHeo','oblique twists':'3o7btMPzJrsdyWVHeo','side bends':'3o7btMPzJrsdyWVHeo','standing toe touches':'xUA7a1ShGogblGHD4O','good mornings':'RILEhMJUV5kovP6ffi','roman chair':'r0WOepedKqxNjS3zM0','leg press':'O3Q1GHgeiw2oU','kettlebell swings':'3o7btMPzJrsdyWVHeo','kettlebell':'3o7btMPzJrsdyWVHeo','medicine ball slams':'3o7btMPzJrsdyWVHeo','battle ropes':'3o7btMPzJrsdyWVHeo','sledgehammer':'3o7btMPzJrsdyWVHeo','tire flips':'3o7btMPzJrsdyWVHeo','farmer walk':'idLmS5DVmSPh6wHg64','suitcase carry':'idLmS5DVmSPh6wHg64','bear crawl':'3og0IMRZ5wWOzGH4NW','crab walk':'3og0IMRZ5wWOzGH4NW','duck walk':'r0WOepedKqxNjS3zM0','inchworm':'xUA7a1ShGogblGHD4O','spiderman stretch':'fxtNFqQcXoVXO','lunges with twist':'xT0xeD7gan8YgJWbwk','curtsy lunges':'xT0xeD7gan8YgJWbwk','reverse lunges':'xT0xeD7gan8YgJWbwk','side lunges':'xT0xeD7gan8YgJWbwk','wall angels':'TxSCql3N1RYDSJmXsJ','band pull apart':'sz2uAAG1KGsYvkHYUI','face pull':'sz2uAAG1KGsYvkHYUI','external rotation':'sz2uAAG1KGsYvkHYUI','internal rotation':'sz2uAAG1KGsYvkHYUI','wrist flexor stretch':'1o3BzWKKbVrTi','wrist extensor stretch':'1o3BzWKKbVrTi','finger stretch':'1o3BzWKKbVrTi','yoga child pose':'MZpWm4Z9XQWbwVMGky','downward dog':'dGx2E1xXYpIze','upward dog':'Z3uwVAFDiEAcWMP7vw','forward fold':'QudXmLN1xN3tO','pigeon pose':'l3v0lsI2YrMmL3t7G','happy baby':'fXtFCiwt9JNEfPqTzf','tree pose':'MZpWm4Z9XQWbwVMGky','warrior pose':'7rUbZWomwdhWmQVWoY','sun salutation':'7rUbZWomwdhWmQVWoY','bridge pose':'7EeEk7QIUVKbV5RWzn','fish pose':'7EeEk7QIUVKbV5RWzn','sphinx pose':'Z3uwVAFDiEAcWMP7vw','seated forward fold':'QudXmLN1xN3tO','head to knee':'QudXmLN1xN3tO','supine twist':'heSg6nPS3UHVzWGuxP','reclining butterfly':'Ld6CUI3vZMYibdvD8t','legs up the wall':'wiRXDJkS5rcMQ2oSJG','savasana':'nXxOjHkR0Obd6','corpse pose':'nXxOjHkR0Obd6','romanian deadlift':'RILEhMJUV5kovP6ffi','straight leg deadlift':'RILEhMJUV5kovP6ffi','sumo squats':'r0WOepedKqxNjS3zM0','goblet squats':'P6Q7qAdAbrlXTJ488T','front squats':'P6Q7qAdAbrlXTJ488T','back squats':'r0WOepedKqxNjS3zM0','overhead squats':'r0WOepedKqxNjS3zM0','bulgarian split squat':'3mgBYwj3yju1Uqd4R6','reverse hyper':'3og0IMRZ5wWOzGH4NW','back extension':'3og0IMRZ5wWOzGH4NW','hyperextension':'3og0IMRZ5wWOzGH4NW','superman hold':'3og0IMRZ5wWOzGH4NW','swimmer kicks':'cI9PSDuenPWiAgSKeN','prone cobra':'Z3uwVAFDiEAcWMP7vw','standing march':'lSPsP2wU1GyImjFkcN','heel raise':'vyRlKcBaxQ2y9Lz1MS','single leg balance':'PmXe3jP2CHqJyFwEHm','single leg stance':'PmXe3jP2CHqJyFwEHm','bosu ball':'r0WOepedKqxNjS3zM0','stability ball':'7EeEk7QIUVKbV5RWzn','swiss ball':'7EeEk7QIUVKbV5RWzn','balance board':'PmXe3jP2CHqJyFwEHm','agility ladder':'eMxJsG1LAljDZ30JsS','cone drills':'eMxJsG1LAljDZ30JsS','shuttle runs':'xT0xeD7gan8YgJWbwk','sprints':'YHkUwFtzfRBvq','interval runs':'YHkUwFtzfRBvq','fartlek':'YHkUwFtzfRBvq','tempo runs':'YHkUwFtzfRBvq','trail running':'YHkUwFtzfRBvq','uphill sprints':'1cwHYKZHaqdkDCexmM','stair sprints':'GCfe8FEQQ3akJ5REmL','jump squats':'xUA7b7eul73i4xfzP2','squat jumps':'xUA7b7eul73i4xfzP2','broad jumps':'1cwHYKZHaqdkDCexmM','standing long jump':'1cwHYKZHaqdkDCexmM','one legged hops':'P6Q7qAdAbrlXTJ488T','bounding':'sz2uAAG1KGsYvkHYUI','power skip':'sz2uAAG1KGsYvkHYUI','carioca':'VAW6QUfFPs3atM4Tfw','grapevine':'VAW6QUfFPs3atM4Tfw','karaoke':'VAW6QUfFPs3atM4Tfw'
     };
     function normalizeKey(s) { return s.toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
-    function exerciseGif(exerciseName) {
+    function exerciseGif(exerciseName, fullscreen) {
       var key = normalizeKey(exerciseName.replace(/\(.*?\)/g,''));
       var id = gifMap[key];
       if (!id) {
         var keyFlat = key.replace(/\s+/g,'');
         for (var k in gifMap) {
           var kFlat = normalizeKey(k).replace(/\s+/g,'');
-          if (kFlat.indexOf(keyFlat) !== -1 || keyFlat.indexOf(kFlat) !== -1) { id = gifMap[k]; break; }
+          if (keyFlat.indexOf(kFlat) !== -1 || kFlat.indexOf(keyFlat) !== -1) { id = gifMap[k]; break; }
         }
+        if (!id) {
+          var words = key.split(' ');
+          for (var w = 0; w < words.length; w++) {
+            if (gifMap[words[w]]) { id = gifMap[words[w]]; break; }
+          }
+        }
+      }
+      if (!id) id = '3o7btMPzJrsdyWVHeo';
+      var quality = fullscreen ? 'original' : 'giphy';
+      return 'https://media.giphy.com/media/' + id + '/' + quality + '.gif';
+    }
+    function renderWorkoutItem(text) {
+      var src = exerciseGif(text, false);
+      return '<div class="workout-item" data-gif="' + src + '" data-exercise="' + text.replace(/"/g,'&quot;') + '"><div class="workout-gif-wrap">' +
+        '<img class="workout-gif" src="' + src + '" alt="" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';var p=this.parentNode;if(p&&!p.querySelector(\'.wg-ph\')){var d=document.createElement(\'div\');d.className=\'workout-gif workout-gif-placeholder wg-ph\';d.textContent=\'🏋️\';p.appendChild(d)}">' +
+        '</div><span class="workout-text">' + text + '</span></div>';
+    }
       }
       if (!id) id = '3o7btMPzJrsdyWVHeo';
       return 'https://media.giphy.com/media/' + id + '/giphy.gif';
@@ -694,7 +764,8 @@
     document.body.appendChild(workoutOverlay);
     function openWorkoutFullscreen(gifSrc, exercise) {
       var img = workoutOverlay.querySelector('.workout-overlay-gif');
-      img.src = gifSrc || '';
+      var hqSrc = gifSrc ? gifSrc.replace('/giphy.gif', '/original.gif').replace('/480w_s.gif', '/original.gif') : '';
+      img.src = hqSrc || gifSrc || '';
       workoutOverlay.querySelector('.workout-overlay-title').textContent = exercise.replace(/\s*\(.*?\)\s*/g,' ').trim();
       workoutOverlay.querySelector('.workout-overlay-desc').textContent = exercise;
       workoutOverlay.classList.add('active');
