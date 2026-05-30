@@ -32,49 +32,32 @@
 
   // ===== GREETING MODAL =====
   function initGreeting() {
-    var overlay = document.getElementById('greetingOverlay');
-    var input = document.getElementById('nameInput');
+    var ov = document.getElementById('greetingOverlay');
+    var inp = document.getElementById('nameInput');
     var btn = document.getElementById('greetingBtn');
     var skip = document.getElementById('greetingSkip');
     var toast = document.getElementById('greetingToast');
     var msg = document.getElementById('greetingMessage');
-    if (!overlay || !input) return;
-    var tags = ['Champion','Warrior','Athlete','Star','Legend','Hero','Rockstar','Beast','Pro','Phenom'];
+    if (!ov || !inp) return;
+    var phrases = ['Stay fit with FITHOMEY!','Time to crush those goals!','Let\'s get stronger together!','FITHOMEY has your back!','You\'re a Champion!'];
     var saved = safeGet('fithomey_name','');
-    if (saved) {
-      overlay.classList.add('hidden');
-      setTimeout(function() {
-        var t = tags[Math.floor(Math.random()*tags.length)];
-        var ps = ['Hey, '+saved+'! Stay fit with FITHOMEY!','Welcome, '+saved+'! Time to crush those goals!','Hey '+saved+', let\'s get stronger together!','What\'s up, '+saved+'? FITHOMEY has your back!','Hey '+saved+', you\'re a '+t+'! Let\'s go!'];
-        msg.textContent = ps[Math.floor(Math.random()*ps.length)];
-        toast.classList.add('show');
-        setTimeout(function(){toast.classList.remove('show')},4500);
-      },600);
-      return;
+    function showToast(n) {
+      msg.textContent = 'Hey, ' + n + '! ' + phrases[Math.floor(Math.random()*phrases.length)];
+      toast.classList.add('show');
+      setTimeout(function(){toast.classList.remove('show')},4000);
     }
+    if (saved) { ov.classList.add('hidden'); showToast(saved); return; }
     function submit() {
-      var name = input.value.trim();
-      if (!name) {
-        input.style.borderColor = '#ef4444';
-        input.placeholder = 'Please enter your name!';
-        input.classList.add('shake');
-        setTimeout(function(){input.classList.remove('shake')},400);
-        return;
-      }
-      safeSet('fithomey_name',name);
-      overlay.classList.add('hidden');
-      setTimeout(function() {
-        var t = tags[Math.floor(Math.random()*tags.length)];
-        var ps = ['Hey, '+name+'! Stay fit with FITHOMEY!','Welcome, '+name+'! Time to crush those goals!','Hey '+name+', let\'s get stronger together!','What\'s up, '+name+'? FITHOMEY has your back!','Hey '+name+', you\'re a '+t+'! Let\'s go!'];
-        msg.textContent = ps[Math.floor(Math.random()*ps.length)];
-        toast.classList.add('show');
-        setTimeout(function(){toast.classList.remove('show')},4500);
-      },300);
+      var n = inp.value.trim();
+      if (!n) { inp.style.borderColor='#ef4444'; inp.classList.add('shake'); setTimeout(function(){inp.classList.remove('shake')},400); return; }
+      safeSet('fithomey_name',n);
+      ov.classList.add('hidden');
+      showToast(n);
     }
-    input.addEventListener('keydown',function(e){if(e.key==='Enter')submit()});
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter')submit()});
     btn && btn.addEventListener('click',submit);
-    skip && skip.addEventListener('click',function(){overlay.classList.add('hidden')});
-    setTimeout(function(){input.focus()},500);
+    skip && skip.addEventListener('click',function(){ov.classList.add('hidden')});
+    setTimeout(function(){inp.focus()},300);
   }
   initGreeting();
 
